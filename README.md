@@ -49,7 +49,7 @@ SafeBite AI provides educational label guidance only. It does not replace a doct
 - Root Directory: `backend`
 - Build Command: `pip install -r requirements.txt`
 - Start Command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-- Environment variable: `CORS_ORIGINS=https://YOUR-VERCEL-APP.vercel.app`
+- Environment variable: `CORS_ORIGINS=https://safebiteai-ai.vercel.app`
 
 See [docs/deployment.md](docs/deployment.md) for full steps.
 

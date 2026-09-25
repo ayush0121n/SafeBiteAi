@@ -27,7 +27,7 @@
 5. Set **Start Command** to `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 6. Add environment variables:
    - `ENVIRONMENT` = `production`
-   - `CORS_ORIGINS` = `https://YOUR-VERCEL-APP.vercel.app`
+   - `CORS_ORIGINS` = `https://safebiteai-ai.vercel.app`
    - `MAX_UPLOAD_SIZE_MB` = `10`
    - `ML_CONTAINER_URL` = `URL_OF_INTERNAL_ML_CONTAINER` (Optional, defaults to mock if unavailable)
    - `ML_CONTAINER_API_KEY` = `YOUR_SECRET_KEY`
