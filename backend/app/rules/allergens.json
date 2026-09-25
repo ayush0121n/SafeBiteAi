@@ -1,0 +1,45 @@
+{
+  "peanut": {
+    "aliases": [
+      "peanut",
+      "peanuts",
+      "groundnut",
+      "groundnuts",
+      "arachis oil",
+      "arachis hypogaea"
+    ],
+    "severity": "critical"
+  },
+  "milk": {
+    "aliases": [
+      "milk",
+      "whey",
+      "casein",
+      "caseinate",
+      "butter",
+      "cream",
+      "ghee",
+      "lactose"
+    ],
+    "severity": "critical"
+  },
+  "wheat": {
+    "aliases": [
+      "wheat",
+      "wheat flour",
+      "atta",
+      "semolina",
+      "suji"
+    ],
+    "severity": "critical"
+  },
+  "soy": {
+    "aliases": [
+      "soy",
+      "soya",
+      "soybean",
+      "soy lecithin"
+    ],
+    "severity": "critical"
+  }
+}

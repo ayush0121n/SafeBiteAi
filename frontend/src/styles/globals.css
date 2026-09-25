@@ -1,0 +1,143 @@
+@import "tailwindcss";
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
+
+:root {
+  --color-bg: #f7f8f3;
+  --color-surface: #ffffff;
+  --color-primary: #4E8F68;
+  --color-primary-hover: #3d7052;
+  --color-primary-light: #e8f5ee;
+  --color-text: #19352a;
+  --color-muted: #6D7B73;
+  --color-safe: #4E9B69;
+  --color-safe-bg: #e8f5ee;
+  --color-caution: #E7A63F;
+  --color-caution-bg: #fef6e8;
+  --color-avoid: #D95D59;
+  --color-avoid-bg: #fceaea;
+  --color-uncertain: #687C8C;
+  --color-uncertain-bg: #eef1f3;
+  --color-border: #e5e7e3;
+
+  font-family: "DM Sans", system-ui, -apple-system, sans-serif;
+  color: var(--color-text);
+  background: var(--color-bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* High contrast mode */
+.high-contrast {
+  --color-bg: #0a0a0a;
+  --color-surface: #1a1a1a;
+  --color-text: #f5f5f5;
+  --color-muted: #cccccc;
+  --color-border: #444444;
+  --color-primary: #6abf8a;
+  --color-primary-hover: #8dd4a6;
+  --color-primary-light: #1a2f22;
+  --color-safe-bg: #1a2f22;
+  --color-caution-bg: #2f2a1a;
+  --color-avoid-bg: #2f1a1a;
+  --color-uncertain-bg: #1a1f2f;
+}
+
+/* Large text mode */
+.large-text {
+  font-size: 20px;
+}
+.large-text h1 { font-size: 2.5rem; }
+.large-text h2 { font-size: 2rem; }
+.large-text h3 { font-size: 1.5rem; }
+.large-text p, .large-text span, .large-text li { font-size: 1.25rem; }
+.large-text button { font-size: 1.25rem; min-height: 56px; }
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  background: var(--color-bg);
+  scroll-behavior: smooth;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background: var(--color-bg);
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+button, input, textarea, select {
+  font: inherit;
+}
+
+button {
+  min-height: 48px;
+  cursor: pointer;
+}
+
+/* Focus styles for accessibility */
+:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Smooth page transitions */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.4s ease-out forwards;
+}
+
+@keyframes pulse-gentle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.animate-pulse-gentle {
+  animation: pulse-gentle 2s ease-in-out infinite;
+}
+
+/* Gradient backgrounds */
+.gradient-hero {
+  background: linear-gradient(135deg, #e8f5ee 0%, #f7f8f3 50%, #eef1f3 100%);
+}
+
+.gradient-primary {
+  background: linear-gradient(135deg, #4E8F68 0%, #3d7052 100%);
+}
+
+/* Card hover effect */
+.card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(25, 53, 42, 0.08);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-muted); }

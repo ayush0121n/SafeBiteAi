@@ -1,0 +1,22 @@
+{
+  "salt": [
+    "sodium chloride",
+    "iodized salt",
+    "rock salt",
+    "sea salt"
+  ],
+  "added_sugar": [
+    "sugar",
+    "sucrose",
+    "glucose syrup",
+    "corn syrup",
+    "dextrose",
+    "maltose",
+    "invert sugar"
+  ],
+  "palm_oil": [
+    "palm oil",
+    "palmolein",
+    "palm kernel oil"
+  ]
+}

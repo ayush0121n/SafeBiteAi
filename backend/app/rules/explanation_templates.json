@@ -1,0 +1,18 @@
+{
+  "allergen_detected": {
+    "title": "{allergen} alert",
+    "message": "This label appears to contain {allergen}, which is in your avoid list. Check the package carefully before eating."
+  },
+  "high_sodium": {
+    "title": "Higher salt amount",
+    "message": "This product has a relatively high sodium amount per serving. This may matter for your low-sodium or blood-pressure goal."
+  },
+  "added_sugar": {
+    "title": "Added sugar found",
+    "message": "This product contains added sugar. This may matter if you are trying to manage blood sugar."
+  },
+  "low_ocr_confidence": {
+    "title": "Please check the original label",
+    "message": "Some text was difficult to read. Compare this result with the package before making a decision."
+  }
+}

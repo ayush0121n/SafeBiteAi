@@ -1,0 +1,29 @@
+node_modules/
+dist/
+.env
+.env.local
+coverage/
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env.python
+
+# Uploaded files and local data
+uploads/
+storage/
+data/raw/
+data/processed/
+*.db
+*.sqlite
+*.sqlite3
+
+# ML/OCR artifacts
+models/
+checkpoints/
+*.onnx
+*.pt
+*.pth

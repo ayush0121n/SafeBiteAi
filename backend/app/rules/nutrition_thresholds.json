@@ -1,0 +1,14 @@
+{
+  "sodium_mg_per_serving": {
+    "moderate": 300,
+    "higher": 600
+  },
+  "added_sugar_g_per_serving": {
+    "moderate": 8,
+    "higher": 15
+  },
+  "saturated_fat_g_per_serving": {
+    "moderate": 3,
+    "higher": 5
+  }
+}
