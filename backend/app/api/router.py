@@ -12,6 +12,7 @@ from app.config import settings
 from app.services.ingredient_service import parse_ingredients_text, resolve_aliases
 from app.services.allergen_service import match_allergens, determine_allergen_status
 from app.services.concern_service import evaluate_concerns, determine_overall_status
+from app.vision.ml_pipeline import vision_pipeline
 
 api_router = APIRouter()
 
@@ -57,36 +58,44 @@ async def create_scan(
         path.write_bytes(content)
 
     # ---------------------------------------------------------
-    # Internal ML Container API (PaddleOCR)
+    # Internal ML Container API (PaddleOCR) or Local Vision Pipeline
     # ---------------------------------------------------------
-    import httpx
-    
     ocr_text = ""
-    ocr_confidence = 0.0
+    ocr_confidence = 0.90
+    vision_results = {}
 
-    try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.post(
-                settings.ml_container_url,
-                headers={"Authorization": f"Bearer {settings.ml_container_api_key}"},
-                files={"file": (file.filename or "image.jpg", content, file.content_type)},
-            )
-            
-            if response.status_code == 200:
-                data = response.json()
-                ocr_text = data.get("text", "")
-                ocr_confidence = data.get("confidence", 0.90)
-            else:
-                print(f"ML API Error: {response.status_code} {response.text}")
-                ocr_text = "Error reading label. Internal ML service failed."
-                ocr_confidence = 0.30
-    except Exception as e:
-        print(f"ML Request failed: {e}")
-        ocr_text = "Error reading label. Connection to ML service failed."
-        ocr_confidence = 0.30
+    if settings.ml_container_url:
+        import httpx
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(
+                    settings.ml_container_url,
+                    headers={"Authorization": f"Bearer {settings.ml_container_api_key}"},
+                    files={"file": (file.filename or "image.jpg", content, file.content_type)},
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    ocr_text = data.get("text", "")
+                    ocr_confidence = data.get("confidence", 0.90)
+                else:
+                    print(f"ML API Error: {response.status_code} {response.text}")
+                    ocr_text = "Error reading label. Internal ML service failed."
+                    ocr_confidence = 0.30
+        except Exception as e:
+            print(f"ML Request failed: {e}")
+            ocr_text = "Error reading label. Connection to ML service failed."
+            ocr_confidence = 0.30
+    else:
+        # Use the local vision pipeline (YOLOv8 + OCR)
+        # Note: In Render free tier, this will run in mock mode
+        vision_results = vision_pipeline.process_food_label(content)
+        ocr_text = vision_results.get("extracted_text", "")
+        ocr_confidence = 0.92
 
     product_name = file.filename.rsplit(".", 1)[0].replace("-", " ").replace("_", " ").title() if file.filename else "Food Label"
     raw_text = ocr_text if len(ocr_text) > 10 else "Ingredients: Rolled Oats, Sugar, Palm Oil, Corn Syrup, Whey Powder, Salt, Soy Lecithin. May contain peanuts and tree nuts."
+
     
     # Nutrition mock (since OCR.space just returns unstructured text, we still mock nutrition values for MVP)
     nutrition = {
@@ -231,3 +240,31 @@ async def get_profile():
 @api_router.put("/api/v1/profiles/me")
 async def update_profile():
     return {"status": "updated"}
+
+@api_router.post("/api/v1/meals", status_code=202)
+async def scan_meal(
+    file: UploadFile = File(...),
+):
+    """
+    Endpoint for Phase 2: Scan Meal / Plate.
+    Returns detected foods and estimated calories/macros.
+    """
+    if file.content_type not in ALLOWED_TYPES:
+        raise HTTPException(status_code=415, detail="Upload a JPG, PNG, or WEBP image.")
+
+    content = await file.read()
+    if len(content) > MAX_SIZE:
+        raise HTTPException(status_code=413, detail="Image must be smaller than 10 MB.")
+        
+    # Process the meal image using the ML vision pipeline (mocked on free tier)
+    meal_results = vision_pipeline.process_meal_image(content)
+    
+    # Add unique ID and image URL
+    meal_id = str(uuid.uuid4())
+    meal_results["meal_id"] = meal_id
+    meal_results["imageUrl"] = f"data:{file.content_type};base64,{base64.b64encode(content).decode('utf-8')}"
+    
+    # Simulate processing delay
+    await asyncio.sleep(1.5)
+    
+    return meal_results

@@ -2,7 +2,7 @@ import { UploadCloud, Info, Image, X, Camera } from "lucide-react";
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useProfileStore } from "../features/profile/profile.store";
-import { createScan } from "../api/client";
+import { createScan, createMealScan } from "../api/client";
 
 export function NewScanPage() {
   const navigate = useNavigate();
@@ -14,6 +14,7 @@ export function NewScanPage() {
   const [analyzing, setAnalyzing] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const [privacyMode, setPrivacyMode] = useState(false);
+  const [scanMode, setScanMode] = useState<"label" | "meal">("label");
 
   const MAX_SIZE = 10 * 1024 * 1024;
   const ALLOWED = ["image/jpeg", "image/png", "image/webp"];
@@ -56,23 +57,53 @@ export function NewScanPage() {
     setError(null);
 
     try {
-      // Send the image AND the profile to the backend for personalized analysis
-      const res = await createScan(file, JSON.stringify(profile), privacyMode);
-      // In privacy mode, the result might be returned completely, or we might need to pass it through state.
-      // For MVP, we'll just pass the full result so the backend doesn't need to save it.
-      navigate(`/app/scan/${res.scanId}`, { state: { result: res } });
+      if (scanMode === "label") {
+        const res = await createScan(file, JSON.stringify(profile), privacyMode);
+        navigate(`/app/scan/${res.scanId}`, { state: { result: res } });
+      } else {
+        const res = await createMealScan(file);
+        navigate(`/app/meal/results`, { state: { result: res } });
+      }
     } catch (err: any) {
-      setError(err.message || "Failed to analyze image. Please try again.");
+      setError(err.message || `Failed to analyze ${scanMode}. Please try again.`);
       setAnalyzing(false);
     }
   };
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* Mode Toggle Tabs */}
+      <div className="flex bg-[var(--color-surface)] p-1 rounded-xl border border-[var(--color-border)] shadow-sm">
+        <button
+          onClick={() => { setScanMode("label"); clearFile(); }}
+          className={`flex-1 py-3 font-bold text-sm rounded-lg transition-colors ${
+            scanMode === "label" 
+              ? "bg-[var(--color-bg)] text-[var(--color-text)] shadow-sm border border-[var(--color-border)]" 
+              : "text-[var(--color-muted)] hover:text-[var(--color-text)]"
+          }`}
+        >
+          🏷️ Scan Label
+        </button>
+        <button
+          onClick={() => { setScanMode("meal"); clearFile(); }}
+          className={`flex-1 py-3 font-bold text-sm rounded-lg transition-colors ${
+            scanMode === "meal" 
+              ? "bg-[var(--color-bg)] text-[var(--color-text)] shadow-sm border border-[var(--color-border)]" 
+              : "text-[var(--color-muted)] hover:text-[var(--color-text)]"
+          }`}
+        >
+          🍽️ Scan Meal / Plate
+        </button>
+      </div>
+
       <section>
-        <h2 className="text-2xl font-bold text-[var(--color-text)] mb-1">Scan a Food Label</h2>
+        <h2 className="text-2xl font-bold text-[var(--color-text)] mb-1">
+          {scanMode === "label" ? "Scan a Food Label" : "Scan Your Meal"}
+        </h2>
         <p className="text-[var(--color-muted)] text-lg">
-          Upload a clear photo of the ingredients list or nutrition panel.
+          {scanMode === "label" 
+            ? "Upload a clear photo of the ingredients list or nutrition panel."
+            : "Take a photo of your plate to detect foods and estimate calories."}
         </p>
       </section>
 

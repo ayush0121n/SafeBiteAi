@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Upload, ShieldCheck, ShieldAlert, ShieldX, HelpCircle, TrendingUp, Clock } from "lucide-react";
 import { useScansStore } from "../features/scans/scans.store";
 import { useProfileStore } from "../features/profile/profile.store";
+import { DailyTracker } from "../components/tracker/DailyTracker";
 import type { ScanStatus } from "../api/types";
 
 const statusConfig: Record<ScanStatus, { Icon: typeof ShieldCheck; color: string; label: string }> = {
@@ -75,6 +76,9 @@ export function DashboardPage() {
           </div>
         </section>
       )}
+
+      {/* Daily Meal Tracker */}
+      <DailyTracker />
 
       {/* Profile Summary */}
       {profile.allergies.length > 0 && (

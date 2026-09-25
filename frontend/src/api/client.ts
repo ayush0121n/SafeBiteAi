@@ -55,3 +55,9 @@ export async function listScans() {
 export async function deleteScan(scanId: string) {
   return apiClient(`/api/v1/scans/${scanId}`, { method: "DELETE" });
 }
+
+export async function createMealScan(file: File): Promise<any> {
+  const body = new FormData();
+  body.append("file", file);
+  return apiClient("/api/v1/meals", { method: "POST", body });
+}

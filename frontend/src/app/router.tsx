@@ -5,6 +5,7 @@ import { OnboardingPage } from "../pages/OnboardingPage";
 import { NewScanPage } from "../pages/NewScanPage";
 import { ScanProcessingPage } from "../pages/ScanProcessingPage";
 import { ScanResultsPage } from "../pages/ScanResultsPage";
+import { MealResultsPage } from "../pages/MealResultsPage";
 import { ScanHistoryPage } from "../pages/ScanHistoryPage";
 import { ProfilePage } from "../pages/ProfilePage";
 import { OfflineCheckPage } from "../pages/OfflineCheckPage";
@@ -41,6 +42,7 @@ export const router = createBrowserRouter([
       { path: "/app/scan", element: <NewScanPage /> },
       { path: "/app/scan/:scanId/processing", element: <ScanProcessingPage /> },
       { path: "/app/scan/:scanId", element: <ScanResultsPage /> },
+      { path: "/app/meal/results", element: <MealResultsPage /> },
       { path: "/app/history", element: <ScanHistoryPage /> },
       { path: "/app/profile", element: <ProfilePage /> },
       { path: "/app/offline-check", element: <OfflineCheckPage /> },
