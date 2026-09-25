@@ -9,7 +9,7 @@ export function LandingPage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="gradient-hero min-h-[85vh] flex flex-col items-center justify-center p-6 text-center relative overflow-hidden perspective-1000">
+      <section className="gradient-hero min-h-[85vh] flex flex-col items-center justify-center p-6 text-center relative perspective-1000">
         {/* Decorative blobs */}
         <div className="absolute top-20 left-10 w-64 h-64 bg-[#4E8F68]/10 rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-20 right-10 w-48 h-48 bg-[#E7A63F]/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
@@ -43,15 +43,17 @@ export function LandingPage() {
             </Link>
           </div>
 
-          <p className="mt-6 text-[var(--color-muted)] text-sm flex flex-col sm:flex-row items-center justify-center gap-4 transform-translate-z-10">
-            <span className="flex items-center gap-2">
+          <div className="mt-8 flex flex-col items-center justify-center gap-3 transform-translate-z-10">
+            <p className="text-[var(--color-muted)] text-sm flex items-center justify-center gap-2">
               <Sparkles size={16} />
               No camera needed · 100% free
-            </span>
-            <Link to="/login" className="text-[var(--color-primary)] font-semibold hover:underline">
-              Already have an account? Log in
-            </Link>
-          </p>
+            </p>
+            <p className="text-sm">
+              <Link to="/login" className="text-[var(--color-primary)] font-semibold hover:underline">
+                Already have an account? Log in
+              </Link>
+            </p>
+          </div>
         </div>
       </section>
 

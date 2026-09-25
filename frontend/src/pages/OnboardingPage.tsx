@@ -180,7 +180,7 @@ export function OnboardingPage() {
             className="flex-1 flex items-center justify-center gap-2 gradient-primary text-white font-bold py-4 rounded-xl shadow-md hover:shadow-lg transition-all"
           >
             <Sparkles size={20} />
-            Start Scanning
+            Finish & Log In
           </button>
         )}
       </div>
