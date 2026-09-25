@@ -1,8 +1,13 @@
+import { useEffect } from "react";
 import { useTrackerStore } from "../../features/tracker/tracker.store";
-import { Trash2, TrendingUp, Calendar } from "lucide-react";
+import { Trash2, TrendingUp, Calendar, Loader } from "lucide-react";
 
 export function DailyTracker() {
-  const { logs, goals, removeLog } = useTrackerStore();
+  const { logs, goals, removeLog, loadSupabaseData, loading } = useTrackerStore();
+
+  useEffect(() => {
+    loadSupabaseData();
+  }, [loadSupabaseData]);
 
   // Filter logs for today
   const today = new Date().toDateString();
