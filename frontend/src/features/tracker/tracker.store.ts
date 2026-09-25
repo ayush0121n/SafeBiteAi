@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { saveMeal, getTodayMeals, getProfile, updateGoals, deleteMeal } from "../lib/database";
+import { saveMeal, getTodayMeals, getProfile, updateGoals, deleteMeal } from "../../lib/database";
 
 export interface LoggedMeal {
   id: string;

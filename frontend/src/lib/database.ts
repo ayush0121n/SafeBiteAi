@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import type { MealLog } from '../features/tracker/tracker.store';
+import type { LoggedMeal } from '../features/tracker/tracker.store';
 
 // Helper to get current user ID
 export const getCurrentUserId = async () => {
@@ -42,7 +42,7 @@ export const updateGoals = async (goals: { calorie_goal?: number; protein_goal?:
 };
 
 // Meal Helpers
-export const saveMeal = async (meal: Partial<MealLog>, scanType: 'label' | 'meal' = 'meal', rawData: any = {}) => {
+export const saveMeal = async (meal: Partial<LoggedMeal>, scanType: 'label' | 'meal' = 'meal', rawData: any = {}) => {
   const userId = await getCurrentUserId();
   if (!userId) throw new Error("Not authenticated");
 
