@@ -46,7 +46,7 @@ export function LandingPage() {
           <div className="mt-8 flex flex-col items-center justify-center gap-3 transform-translate-z-10">
             <p className="text-[var(--color-muted)] text-sm flex items-center justify-center gap-2">
               <Sparkles size={16} />
-              No camera needed · 100% free
+              Camera capture available · 100% free
             </p>
             <p className="text-sm">
               <Link to="/login" className="text-[var(--color-primary)] font-semibold hover:underline">
