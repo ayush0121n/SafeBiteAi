@@ -261,8 +261,8 @@ async def scan_meal(
     if len(content) > MAX_SIZE:
         raise HTTPException(status_code=413, detail="Image must be smaller than 10 MB.")
         
-    # Process the meal image using the ML vision pipeline (mocked on free tier)
-    meal_results = vision_pipeline.process_meal_image(content)
+    # Process the meal image using the ML vision pipeline (mocked on free tier unless HF token provided)
+    meal_results = await vision_pipeline.process_meal_image(content)
     
     # Add unique ID and image URL
     meal_id = str(uuid.uuid4())

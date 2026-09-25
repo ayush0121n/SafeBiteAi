@@ -4,6 +4,10 @@ import logging
 from typing import Dict, Any, List
 from PIL import Image
 import numpy as np
+import httpx
+import base64
+import os
+import asyncio
 
 logger = logging.getLogger(__name__)
 
@@ -117,23 +121,86 @@ class VisionPipeline:
             "pipeline": "YOLOv8 + PaddleOCR"
         }
 
-    def process_meal_image(self, image_bytes: bytes) -> Dict[str, Any]:
+    async def process_meal_image(self, image_bytes: bytes) -> Dict[str, Any]:
         """
-        Phase 2: Scan Meal Pipeline
-        1. Run YOLOv8 to detect food items (bounding boxes)
-        2. Run Vision Transformer (ViT / Food-101) to classify cropped foods
-        3. Estimate calories and macros
+        Phase 2: Scan Meal Pipeline using REAL APIs
+        1. Call Hugging Face API for ViT classification
+        2. Query USDA FoodData Central for actual nutrition
         """
-        logger.info("Starting VisionPipeline processing for meal...")
+        logger.info("Starting VisionPipeline processing for meal with HF + USDA...")
         image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
         
-        if not HAS_ULTRALYTICS:
-            logger.info("Running in fallback/mock mode for meal processing.")
+        hf_token = os.getenv("HUGGING_FACE_API_KEY")
+        if not hf_token or hf_token == "your_hf_key_here":
+            logger.info("No Hugging Face token found. Running mock.")
             return self._mock_process_meal(image)
+
+        try:
+            # Query Hugging Face
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    "https://api-inference.huggingface.co/models/nateraw/food",
+                    headers={"Authorization": f"Bearer {hf_token}"},
+                    content=image_bytes,
+                    timeout=15.0
+                )
+                response.raise_for_status()
+                predictions = response.json()
+
+            if not predictions or not isinstance(predictions, list):
+                return self._mock_process_meal(image)
+
+            # Get top 2 predictions above a certain threshold, or just the top 1
+            top_preds = [p for p in predictions if p.get('score', 0) > 0.1][:2]
             
-        # Real implementation would go here (using self.yolo_meal_model and self.vit_model)
-        # We fallback to mock for the MVP to prevent crashing the free tier
-        return self._mock_process_meal(image)
+            if not top_preds:
+                return self._mock_process_meal(image)
+
+            foods_list = []
+            total_nut = {"calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0}
+
+            from app.services.nutrition_service import fetch_nutrition_for_food
+
+            # Run USDA queries concurrently
+            tasks = []
+            for p in top_preds:
+                label = p.get('label', '').replace('_', ' ').title()
+                tasks.append(fetch_nutrition_for_food(label))
+                
+            nutrition_results = await asyncio.gather(*tasks)
+
+            for p, nut in zip(top_preds, nutrition_results):
+                label = p.get('label', '').replace('_', ' ').title()
+                score = p.get('score', 0)
+
+                # If USDA failed, fall back to some mock data for this item
+                if not nut:
+                    nut = {
+                        "calories": 100, "protein_g": 5, "carbs_g": 10, "fat_g": 2, "serving_g": 100
+                    }
+
+                foods_list.append({
+                    "name": label,
+                    "confidence": round(score, 2),
+                    "box": [0, 0, 0, 0], # Bounding box not provided by standard classification models
+                    "nutrition": nut
+                })
+
+                total_nut["calories"] += nut["calories"]
+                total_nut["protein_g"] += nut["protein_g"]
+                total_nut["carbs_g"] += nut["carbs_g"]
+                total_nut["fat_g"] += nut["fat_g"]
+
+            return {
+                "status": "success",
+                "foods": foods_list,
+                "total_nutrition": total_nut,
+                "pipeline": "Hugging Face ViT + USDA API"
+            }
+
+        except Exception as e:
+            logger.error(f"Error in meal processing pipeline: {e}")
+            return self._mock_process_meal(image)
 
     def _mock_process(self, image: Image.Image) -> Dict[str, Any]:
         """Fallback mock for environments without heavy ML libraries (like Render free tier)."""
