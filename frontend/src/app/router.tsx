@@ -12,6 +12,7 @@ import { OfflineCheckPage } from "../pages/OfflineCheckPage";
 import { AdminLoginPage } from "../pages/AdminLoginPage";
 import { AdminDashboardPage } from "../pages/AdminDashboardPage";
 import { LoginPage } from "../pages/LoginPage";
+import { SignupPage } from "../pages/SignupPage";
 import { AppShell } from "../components/layout/AppShell";
 
 export const router = createBrowserRouter([
@@ -26,6 +27,10 @@ export const router = createBrowserRouter([
   {
     path: "/login",
     element: <LoginPage />,
+  },
+  {
+    path: "/signup",
+    element: <SignupPage />,
   },
   {
     path: "/admin",

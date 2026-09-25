@@ -1,30 +1,37 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ShieldCheck, Mail, Lock } from "lucide-react";
+import { ShieldCheck, Mail, Lock, User } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
-export function LoginPage() {
+export function SignupPage() {
   const navigate = useNavigate();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            full_name: name,
+          }
+        }
       });
 
       if (error) throw error;
-      navigate("/app");
+      // On success, go to onboarding to set up profile preferences
+      navigate("/onboarding");
     } catch (err: any) {
-      setError(err.message || "Failed to log in.");
+      setError(err.message || "Failed to create account.");
     } finally {
       setLoading(false);
     }
@@ -37,8 +44,8 @@ export function LoginPage() {
           <div className="inline-flex items-center justify-center p-3 rounded-full bg-[var(--color-primary-light)] text-[var(--color-primary)] mb-4 transform-translate-z-20">
             <ShieldCheck size={40} className="animate-pulse-gentle" />
           </div>
-          <h1 className="text-3xl font-bold text-[var(--color-text)] mb-2 transform-translate-z-10">Welcome back</h1>
-          <p className="text-[var(--color-muted)]">Sign in to your SafeBite account</p>
+          <h1 className="text-3xl font-bold text-[var(--color-text)] mb-2 transform-translate-z-10">Create Account</h1>
+          <p className="text-[var(--color-muted)]">Join SafeBite AI to track your nutrition safely</p>
         </div>
 
         {error && (
@@ -47,7 +54,21 @@ export function LoginPage() {
           </div>
         )}
 
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={handleSignup} className="space-y-4">
+          <div>
+            <label className="block text-sm font-bold text-[var(--color-text)] mb-1">Full Name</label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-muted)]" size={20} />
+              <input
+                type="text"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-xl focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-all"
+                placeholder="John Doe"
+              />
+            </div>
+          </div>
           <div>
             <label className="block text-sm font-bold text-[var(--color-text)] mb-1">Email</label>
             <div className="relative">
@@ -73,6 +94,7 @@ export function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-xl focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-all"
                 placeholder="••••••••"
+                minLength={6}
               />
             </div>
           </div>
@@ -85,15 +107,15 @@ export function LoginPage() {
             {loading ? (
               <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
-              "Sign In"
+              "Sign Up"
             )}
           </button>
         </form>
 
         <p className="text-center mt-6 text-[var(--color-muted)]">
-          Don't have an account?{" "}
-          <Link to="/signup" className="text-[var(--color-primary)] font-bold hover:underline">
-            Sign up
+          Already have an account?{" "}
+          <Link to="/login" className="text-[var(--color-primary)] font-bold hover:underline">
+            Sign in
           </Link>
         </p>
       </div>
