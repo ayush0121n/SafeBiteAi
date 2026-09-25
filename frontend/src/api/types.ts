@@ -54,6 +54,16 @@ export interface DetectedRegion {
   bbox: { x: number; y: number; width: number; height: number };
 }
 
+export interface Alternative {
+  id: string;
+  productName: string;
+  brand: string;
+  reason: string;
+  highlights: string;
+  url: string;
+  saved?: boolean;
+}
+
 export interface ScanResult {
   scanId: string;
   productName?: string;
@@ -75,6 +85,7 @@ export interface ScanResult {
   allergens: AllergenMatch[];
   nutrition: NutritionData;
   concerns: Concern[];
+  alternatives?: Alternative[];
   disclaimers: string[];
   createdAt: string;
 }

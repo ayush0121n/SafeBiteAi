@@ -85,6 +85,9 @@ export function ScanResultsPage() {
           ? `Allergen alerts: ${result.allergens.map((a) => `${a.name}, matched from ${a.matchedText}`).join(". ")}.`
           : "No allergen alerts found.",
         ...result.concerns.map((c) => `${c.title}: ${c.plainLanguageReason}`),
+        ...(result.alternatives && result.alternatives.length > 0 
+          ? ["Safer alternatives available: " + result.alternatives.map((alt) => alt.productName).join(", ")]
+          : []),
         result.disclaimers[0],
       ];
       const utterance = new SpeechSynthesisUtterance(parts.join(" "));
@@ -253,6 +256,44 @@ export function ScanResultsPage() {
               <div key={item.label} className="bg-[var(--color-bg)] rounded-lg p-3">
                 <p className="text-sm text-[var(--color-muted)]">{item.label}</p>
                 <p className="text-lg font-bold text-[var(--color-text)]">{item.value}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Safer Alternatives */}
+      {result.alternatives && result.alternatives.length > 0 && (
+        <section className="space-y-3 animate-slide-up" style={{ animationDelay: "0.25s" }}>
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="text-xl font-bold text-blue-700 dark:text-blue-400">💡 Safer Alternatives</h3>
+            <span className="text-xs font-bold text-[var(--color-muted)] border border-[var(--color-border)] px-2 py-0.5 rounded-full">Open Food Facts</span>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {result.alternatives.map((alt) => (
+              <div key={alt.id} className="bg-[var(--color-surface)] rounded-xl p-5 border-2 border-blue-100 dark:border-blue-900 shadow-sm flex flex-col justify-between h-full">
+                <div>
+                  <h4 className="font-bold text-lg text-[var(--color-text)] leading-tight mb-1">{alt.productName}</h4>
+                  <p className="text-sm font-semibold text-[var(--color-muted)] mb-3">{alt.brand}</p>
+                  
+                  <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg mb-3">
+                    <p className="text-sm text-blue-800 dark:text-blue-300 font-medium">
+                      ✓ {alt.reason}
+                    </p>
+                  </div>
+                  <p className="text-xs text-[var(--color-muted)] mb-4 font-medium uppercase tracking-wide">
+                    {alt.highlights}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <a href={alt.url} target="_blank" rel="noopener noreferrer" 
+                    className="flex-1 text-center py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg text-sm font-bold text-[var(--color-text)] hover:bg-[var(--color-surface)] transition-colors">
+                    View
+                  </a>
+                  <button className="flex-1 flex items-center justify-center gap-1 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors">
+                    <Save size={16} /> Save
+                  </button>
+                </div>
               </div>
             ))}
           </div>

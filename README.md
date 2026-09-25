@@ -1,14 +1,17 @@
 # SafeBite AI
 SafeBite AI is an accessible packaged-food-label scanner. Users can upload a food label image, extract ingredients and nutrition information, identify possible allergens, and receive profile-aware, plain-language guidance.
 
-## MVP scope
+## Features
 - User health profile
-- Image upload
-- OCR ingredient extraction
+- Image upload (Scan Label & Scan Meal modes)
+- OCR ingredient extraction (PaddleOCR) & Label region detection (YOLOv8)
+- Meal/Plate classification & calorie estimation (Vision Transformer/Food-101)
 - Rule-based allergen detection
 - Nutrition concern flags
+- Daily Calorie & Macro Tracker
+- Smarter Product Recommendations (Open Food Facts integration)
 - Scan result history
-- Accessibility modes
+- Accessibility modes (Text-to-Speech, Large Text, High Contrast)
 
 ## Out of scope for MVP
 - Medical diagnosis

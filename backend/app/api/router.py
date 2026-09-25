@@ -12,6 +12,7 @@ from app.config import settings
 from app.services.ingredient_service import parse_ingredients_text, resolve_aliases
 from app.services.allergen_service import match_allergens, determine_allergen_status
 from app.services.concern_service import evaluate_concerns, determine_overall_status
+from app.services.recommendation_service import fetch_safer_alternatives
 from app.vision.ml_pipeline import vision_pipeline
 
 api_router = APIRouter()
@@ -127,6 +128,9 @@ async def create_scan(
     ocr_confidence = 0.92
     overall_status = determine_overall_status(allergen_status, concerns, ocr_confidence)
 
+    # 5. Fetch Safer Alternatives
+    alternatives = fetch_safer_alternatives(product_name, allergens, concerns) if overall_status != "safe" else []
+
     result = {
         "scanId": scan_id,
         "productName": product_name,
@@ -176,6 +180,7 @@ async def create_scan(
                 "factors": c["factors"]
             } for c in concerns
         ] if concerns else [],
+        "alternatives": alternatives,
         "disclaimers": [
             "SafeBite AI provides educational guidance based on the readable label image. Always check the original package.",
         ],
