@@ -1,7 +1,11 @@
-import { Link } from "react-router-dom";
-import { ShieldCheck, Upload, User, Sparkles, Heart, Eye, Volume2 } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { ShieldCheck, Upload, User, Sparkles, Heart, Eye, ArrowRight } from "lucide-react";
+import { useProfileStore } from "../features/profile/profile.store";
 
 export function LandingPage() {
+  const profile = useProfileStore((s) => s.profile);
+  const hasProfile = profile.allergies.length > 0 || profile.conditions.length > 0;
+  const navigate = useNavigate();
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -30,11 +34,11 @@ export function LandingPage() {
           </p>
 
           <Link
-            to="/onboarding"
+            to={hasProfile ? "/app" : "/onboarding"}
             className="inline-flex items-center gap-3 gradient-primary text-white text-xl font-bold py-4 px-10 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
-            <Upload size={24} />
-            Get Started Free
+            {hasProfile ? <ArrowRight size={24} /> : <Upload size={24} />}
+            {hasProfile ? "Go to Dashboard" : "Get Started Free"}
           </Link>
 
           <p className="mt-6 text-[var(--color-muted)] text-sm flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -121,7 +125,7 @@ export function LandingPage() {
 
           <div className="text-center mt-12">
             <Link
-              to="/onboarding"
+              to={hasProfile ? "/app/scan" : "/onboarding"}
               className="inline-flex items-center gap-2 gradient-primary text-white font-bold py-4 px-8 rounded-2xl shadow-lg hover:shadow-xl transition-all"
             >
               Start Scanning
@@ -135,9 +139,13 @@ export function LandingPage() {
         <p className="text-[var(--color-muted)] text-sm mb-2">
           SafeBite AI provides educational guidance only. It does not replace medical advice.
         </p>
-        <p className="text-[var(--color-muted)] text-xs">
-          © 2026 Ayush Narkhede · MIT License
-        </p>
+        <div className="flex items-center justify-center gap-4 text-[var(--color-muted)] text-xs mt-4">
+          <p>© 2026 Ayush Narkhede · MIT License</p>
+          <span>•</span>
+          <Link to="/admin" className="hover:text-[var(--color-primary)] transition-colors">
+            Admin Portal
+          </Link>
+        </div>
       </footer>
     </div>
   );
