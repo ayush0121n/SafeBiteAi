@@ -128,7 +128,7 @@ export function NewScanPage() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <input
               type="file"
-              accept="image/jpeg,image/png,image/webp"
+              accept="image/*"
               capture="environment"
               onChange={handleFileChange}
               className="hidden"
