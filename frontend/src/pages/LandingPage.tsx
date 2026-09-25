@@ -37,9 +37,14 @@ export function LandingPage() {
             Get Started Free
           </Link>
 
-          <p className="mt-6 text-[var(--color-muted)] text-sm flex items-center justify-center gap-2">
-            <Sparkles size={16} />
-            No camera needed · No sign-up required · 100% free
+          <p className="mt-6 text-[var(--color-muted)] text-sm flex flex-col sm:flex-row items-center justify-center gap-4">
+            <span className="flex items-center gap-2">
+              <Sparkles size={16} />
+              No camera needed · 100% free
+            </span>
+            <Link to="/login" className="text-[var(--color-primary)] font-semibold hover:underline">
+              Already have an account? Log in
+            </Link>
           </p>
         </div>
       </section>
