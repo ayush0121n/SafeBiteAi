@@ -136,11 +136,80 @@ export function AdminDashboardPage() {
           </div>
         )}
 
-        {activeTab !== "overview" && activeTab !== "features" && (
-          <div className="bg-[var(--color-surface)] p-12 rounded-2xl border border-[var(--color-border)] shadow-sm text-center">
-             <Settings className="mx-auto h-16 w-16 text-[var(--color-muted)] opacity-50 mb-4" />
-             <h3 className="text-xl font-bold text-[var(--color-text)] mb-2">Module under development</h3>
-             <p className="text-[var(--color-muted)]">This section is part of Phase 3 development.</p>
+        {activeTab === "users" && (
+          <div className="bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border)] shadow-sm overflow-hidden">
+            <div className="p-6 border-b border-[var(--color-border)] flex justify-between items-center">
+              <div>
+                <h3 className="font-bold text-[var(--color-text)]">User Management</h3>
+                <p className="text-sm text-[var(--color-muted)]">Manage registered users and permissions.</p>
+              </div>
+              <button className="bg-[var(--color-primary)] text-white px-4 py-2 rounded-lg font-bold hover:opacity-90">
+                + Add User
+              </button>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-[var(--color-border)] bg-[var(--color-bg)]">
+                    <th className="p-4 font-bold text-[var(--color-muted)] text-sm">User</th>
+                    <th className="p-4 font-bold text-[var(--color-muted)] text-sm">Role</th>
+                    <th className="p-4 font-bold text-[var(--color-muted)] text-sm">Status</th>
+                    <th className="p-4 font-bold text-[var(--color-muted)] text-sm text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--color-border)]">
+                  {[
+                    { name: "Ayush Narkhede", email: "ayush@safebiteai.com", role: "Admin", status: "Active" },
+                    { name: "John Doe", email: "john@example.com", role: "User", status: "Active" },
+                    { name: "Jane Smith", email: "jane@example.com", role: "User", status: "Suspended" }
+                  ].map((user, idx) => (
+                    <tr key={idx} className="hover:bg-[var(--color-bg)] transition-colors">
+                      <td className="p-4">
+                        <p className="font-bold text-[var(--color-text)]">{user.name}</p>
+                        <p className="text-sm text-[var(--color-muted)]">{user.email}</p>
+                      </td>
+                      <td className="p-4 text-[var(--color-text)]">{user.role}</td>
+                      <td className="p-4">
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                          user.status === "Active" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                        }`}>
+                          {user.status}
+                        </span>
+                      </td>
+                      <td className="p-4 text-right">
+                        <button className="text-[var(--color-primary)] hover:underline text-sm font-bold">Edit</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "alerts" && (
+          <div className="space-y-4">
+            {[
+              { title: "High load detected on OCR Container", time: "10 mins ago", type: "warning", desc: "API response times are exceeding 2000ms. Consider scaling up the ML container." },
+              { title: "New allergen alias mapped", time: "2 hours ago", type: "info", desc: "System auto-mapped 'arachis oil' to 'peanuts' globally." },
+              { title: "Database backup completed", time: "1 day ago", type: "success", desc: "Daily snapshot created successfully." }
+            ].map((alert, idx) => (
+               <div key={idx} className={`p-6 rounded-2xl border ${
+                 alert.type === "warning" ? "border-orange-300 bg-orange-50" : 
+                 alert.type === "info" ? "border-blue-300 bg-blue-50" : 
+                 "border-green-300 bg-green-50"
+               }`}>
+                 <div className="flex justify-between items-start mb-2">
+                   <h3 className={`font-bold ${
+                     alert.type === "warning" ? "text-orange-800" : 
+                     alert.type === "info" ? "text-blue-800" : 
+                     "text-green-800"
+                   }`}>{alert.title}</h3>
+                   <span className="text-xs text-gray-500 font-medium">{alert.time}</span>
+                 </div>
+                 <p className="text-gray-700 text-sm">{alert.desc}</p>
+               </div>
+            ))}
           </div>
         )}
       </div>

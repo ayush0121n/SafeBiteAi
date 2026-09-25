@@ -9,14 +9,14 @@ export function LandingPage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="gradient-hero min-h-[85vh] flex flex-col items-center justify-center p-6 text-center relative overflow-hidden">
+      <section className="gradient-hero min-h-[85vh] flex flex-col items-center justify-center p-6 text-center relative overflow-hidden perspective-1000">
         {/* Decorative blobs */}
-        <div className="absolute top-20 left-10 w-64 h-64 bg-[#4E8F68]/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 right-10 w-48 h-48 bg-[#E7A63F]/10 rounded-full blur-3xl" />
+        <div className="absolute top-20 left-10 w-64 h-64 bg-[#4E8F68]/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-20 right-10 w-48 h-48 bg-[#E7A63F]/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
 
-        <div className="max-w-lg w-full relative z-10 animate-fade-in">
+        <div className="max-w-lg w-full relative z-10 animate-3d-float transform-style-3d">
           {/* Logo */}
-          <div className="flex items-center justify-center gap-3 mb-8">
+          <div className="flex items-center justify-center gap-3 mb-8 transform-translate-z-20">
             <div className="gradient-primary p-3 rounded-2xl shadow-lg">
               <ShieldCheck size={36} className="text-white" />
             </div>
@@ -25,23 +25,25 @@ export function LandingPage() {
             </h1>
           </div>
 
-          <p className="text-2xl font-medium text-[var(--color-text)] mb-4 leading-snug">
+          <p className="text-2xl font-medium text-[var(--color-text)] mb-4 leading-snug transform-translate-z-10">
             Know what's inside your food.
           </p>
-          <p className="text-lg text-[var(--color-muted)] mb-10 max-w-md mx-auto leading-relaxed">
+          <p className="text-lg text-[var(--color-muted)] mb-10 max-w-md mx-auto leading-relaxed transform-translate-z-10">
             Upload a photo of any food label. SafeBite helps you spot allergens,
             high sugar, high salt, and ingredients that matter to your health profile.
           </p>
 
-          <Link
-            to={hasProfile ? "/app" : "/onboarding"}
-            className="inline-flex items-center gap-3 gradient-primary text-white text-xl font-bold py-4 px-10 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
-          >
-            {hasProfile ? <ArrowRight size={24} /> : <Upload size={24} />}
-            {hasProfile ? "Go to Dashboard" : "Get Started Free"}
-          </Link>
+          <div className="transform-translate-z-30">
+            <Link
+              to={hasProfile ? "/app" : "/onboarding"}
+              className="inline-flex items-center gap-3 gradient-primary text-white text-xl font-bold py-4 px-10 rounded-2xl shadow-[0_10px_30px_rgba(78,143,104,0.4)] hover:shadow-[0_15px_40px_rgba(78,143,104,0.6)] transition-all duration-300 hover:scale-105 active:scale-95"
+            >
+              {hasProfile ? <ArrowRight size={24} /> : <Upload size={24} />}
+              {hasProfile ? "Go to Dashboard" : "Get Started Free"}
+            </Link>
+          </div>
 
-          <p className="mt-6 text-[var(--color-muted)] text-sm flex flex-col sm:flex-row items-center justify-center gap-4">
+          <p className="mt-6 text-[var(--color-muted)] text-sm flex flex-col sm:flex-row items-center justify-center gap-4 transform-translate-z-10">
             <span className="flex items-center gap-2">
               <Sparkles size={16} />
               No camera needed · 100% free
