@@ -39,20 +39,20 @@ export function DashboardPage() {
       <div className="flex flex-col sm:flex-row gap-4">
         <Link
           to="/app/scan"
-          className="card-hover flex flex-col items-center justify-center w-full sm:w-2/3 border-2 border-dashed border-[var(--color-primary)] bg-[var(--color-surface)] rounded-2xl p-8 min-h-[140px] transition-all group"
+          className="card-hover flex flex-col items-center justify-center w-full sm:w-2/3 border-2 border-[var(--color-primary)] bg-[var(--color-surface)] rounded-2xl p-8 min-h-[140px] transition-all duration-300 group perspective-1000 shadow-[0_4px_20px_rgba(78,143,104,0.15)] hover:shadow-[0_8px_30px_rgba(78,143,104,0.3)] transform-style-3d hover:scale-[1.02]"
         >
-          <div className="gradient-primary text-white p-4 rounded-2xl mb-4 shadow-md group-hover:shadow-lg transition-shadow">
+          <div className="gradient-primary text-white p-4 rounded-2xl mb-4 shadow-lg group-hover:shadow-xl transition-all transform-translate-z-20 animate-pulse-gentle">
             <Upload size={32} />
           </div>
-          <span className="text-[var(--color-text)] font-bold text-xl">Upload a food label</span>
-          <span className="text-[var(--color-muted)] text-sm mt-1">JPG, PNG, or WEBP · Max 10MB</span>
+          <span className="text-[var(--color-text)] font-bold text-xl transform-translate-z-10 group-hover:text-[var(--color-primary)] transition-colors">Upload a food label</span>
+          <span className="text-[var(--color-muted)] text-sm mt-1 transform-translate-z-10">JPG, PNG, or WEBP · Max 10MB</span>
         </Link>
 
         <Link
           to="/app/offline-check"
-          className="card-hover flex flex-col items-center justify-center w-full sm:w-1/3 bg-[var(--color-avoid-bg)] border border-[var(--color-avoid)] rounded-2xl p-6 min-h-[140px] transition-all group"
+          className="card-hover flex flex-col items-center justify-center w-full sm:w-1/3 bg-[var(--color-avoid-bg)] border border-[var(--color-avoid)] rounded-2xl p-6 min-h-[140px] transition-all duration-300 group hover:scale-[1.02] shadow-sm hover:shadow-md"
         >
-          <div className="text-[var(--color-avoid)] p-3 bg-white/50 rounded-2xl mb-3 shadow-sm group-hover:shadow transition-shadow">
+          <div className="text-[var(--color-avoid)] p-3 bg-white/60 rounded-2xl mb-3 shadow-sm group-hover:shadow transition-all group-hover:scale-110">
             <ShieldAlert size={28} />
           </div>
           <span className="text-[var(--color-avoid)] font-bold text-lg text-center leading-tight">Offline<br/>Emergency Check</span>
@@ -62,17 +62,17 @@ export function DashboardPage() {
       {/* Quick Stats */}
       {scans.length > 0 && (
         <section className="grid grid-cols-3 gap-3">
-          <div className="bg-[var(--color-safe-bg)] rounded-xl p-4 text-center">
-            <p className="text-2xl font-bold text-[var(--color-safe)]">{safeCount}</p>
-            <p className="text-xs font-bold text-[var(--color-safe)]">Safe</p>
+          <div className="bg-[var(--color-safe-bg)] rounded-xl p-4 text-center transform hover:scale-105 transition-transform duration-300">
+            <p className="text-3xl font-bold text-[var(--color-safe)] mb-1">{safeCount}</p>
+            <p className="text-xs font-bold text-[var(--color-safe)] uppercase tracking-wider">Safe</p>
           </div>
-          <div className="bg-[var(--color-caution-bg)] rounded-xl p-4 text-center">
-            <p className="text-2xl font-bold text-[var(--color-caution)]">{cautionCount}</p>
-            <p className="text-xs font-bold text-[var(--color-caution)]">Caution</p>
+          <div className="bg-[var(--color-caution-bg)] rounded-xl p-4 text-center transform hover:scale-105 transition-transform duration-300">
+            <p className="text-3xl font-bold text-[var(--color-caution)] mb-1">{cautionCount}</p>
+            <p className="text-xs font-bold text-[var(--color-caution)] uppercase tracking-wider">Caution</p>
           </div>
-          <div className="bg-[var(--color-avoid-bg)] rounded-xl p-4 text-center">
-            <p className="text-2xl font-bold text-[var(--color-avoid)]">{avoidCount}</p>
-            <p className="text-xs font-bold text-[var(--color-avoid)]">Avoid</p>
+          <div className="bg-[var(--color-avoid-bg)] rounded-xl p-4 text-center transform hover:scale-105 transition-transform duration-300">
+            <p className="text-3xl font-bold text-[var(--color-avoid)] mb-1">{avoidCount}</p>
+            <p className="text-xs font-bold text-[var(--color-avoid)] uppercase tracking-wider">Avoid</p>
           </div>
         </section>
       )}

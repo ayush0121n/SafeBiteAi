@@ -40,7 +40,7 @@ export function OnboardingPage() {
 
   const steps = [
     // Step 1: Allergies
-    <div key="allergies" className="animate-fade-in">
+    <div key="allergies" className="animate-slide-up transform-style-3d">
       <h2 className="text-3xl font-bold text-[var(--color-text)] mb-2">What should we watch for?</h2>
       <p className="text-[var(--color-muted)] mb-6 text-lg">Select any ingredients you need to avoid.</p>
       <div className="flex flex-wrap gap-3">
@@ -62,7 +62,7 @@ export function OnboardingPage() {
     </div>,
 
     // Step 2: Health conditions
-    <div key="conditions" className="animate-fade-in">
+    <div key="conditions" className="animate-slide-up transform-style-3d">
       <h2 className="text-3xl font-bold text-[var(--color-text)] mb-2">Any health goals?</h2>
       <p className="text-[var(--color-muted)] mb-6 text-lg">We'll flag ingredients that may matter for these.</p>
       <div className="space-y-3">
@@ -84,7 +84,7 @@ export function OnboardingPage() {
     </div>,
 
     // Step 3: Dietary preferences
-    <div key="preferences" className="animate-fade-in">
+    <div key="preferences" className="animate-slide-up transform-style-3d">
       <h2 className="text-3xl font-bold text-[var(--color-text)] mb-2">Dietary preferences?</h2>
       <p className="text-[var(--color-muted)] mb-6 text-lg">Optional — helps us give better guidance.</p>
       <div className="flex flex-wrap gap-3">
@@ -150,7 +150,7 @@ export function OnboardingPage() {
       </div>
 
       {/* Content */}
-      <div className="max-w-md w-full bg-[var(--color-surface)] p-8 rounded-2xl shadow-sm border border-[var(--color-border)]">
+      <div className="max-w-md w-full bg-[var(--color-surface)] p-8 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.06)] border border-[var(--color-border)] perspective-1000">
         {steps[step]}
       </div>
 
@@ -177,9 +177,9 @@ export function OnboardingPage() {
         ) : (
           <button
             onClick={handleFinish}
-            className="flex-1 flex items-center justify-center gap-2 gradient-primary text-white font-bold py-4 rounded-xl shadow-md hover:shadow-lg transition-all"
+            className="flex-1 flex items-center justify-center gap-2 gradient-primary text-white font-bold py-4 rounded-xl shadow-[0_4px_20px_rgba(78,143,104,0.3)] hover:shadow-[0_8px_30px_rgba(78,143,104,0.5)] transition-all transform hover:scale-[1.02]"
           >
-            <Sparkles size={20} />
+            <Sparkles size={20} className="animate-pulse-gentle" />
             Finish & Log In
           </button>
         )}

@@ -113,12 +113,14 @@ export function ScanResultsPage() {
       </Link>
 
       {/* Overall Status */}
-      <section className={`${cfg.bg} rounded-2xl p-8 text-center animate-slide-up`}>
-        <cfg.Icon size={60} className={`mx-auto mb-3 ${cfg.color}`} />
-        <h2 className={`text-3xl font-bold ${cfg.color}`}>{cfg.label}</h2>
-        <p className="text-[var(--color-text)] mt-2 text-lg">{cfg.description}</p>
+      <section className={`${cfg.bg} rounded-2xl p-8 text-center animate-slide-up shadow-sm transform-style-3d hover:scale-[1.01] transition-transform duration-300`}>
+        <div className="transform-translate-z-20">
+          <cfg.Icon size={60} className={`mx-auto mb-3 ${cfg.color} animate-pulse-gentle`} />
+        </div>
+        <h2 className={`text-3xl font-bold ${cfg.color} transform-translate-z-10`}>{cfg.label}</h2>
+        <p className="text-[var(--color-text)] mt-2 text-lg transform-translate-z-10">{cfg.description}</p>
         {result.productName && (
-          <p className="font-bold text-[var(--color-text)] mt-3 text-xl">{result.productName}</p>
+          <p className="font-bold text-[var(--color-text)] mt-3 text-xl transform-translate-z-10">{result.productName}</p>
         )}
       </section>
 
