@@ -1,13 +1,33 @@
-import { Outlet, Link, useLocation } from "react-router-dom";
+import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { Camera, LayoutDashboard, History, User, ShieldCheck, Sun, Moon, Type } from "lucide-react";
 import { useAccessibilityStore } from "../../features/accessibility/accessibility.store";
 import { useEffect } from "react";
+import { supabase } from "../../lib/supabase";
 
 export function AppShell() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { largeText, highContrast, toggleLargeText, toggleHighContrast, load } = useAccessibilityStore();
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { 
+    load(); 
+    // Basic route protection
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        navigate("/login");
+      }
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        navigate("/login");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [load, navigate]);
 
   const navItems = [
     { name: "Dashboard", path: "/app", icon: LayoutDashboard },

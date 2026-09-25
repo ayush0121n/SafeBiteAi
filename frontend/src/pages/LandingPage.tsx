@@ -35,11 +35,11 @@ export function LandingPage() {
 
           <div className="transform-translate-z-30">
             <Link
-              to={hasProfile ? "/app" : "/onboarding"}
+              to="/signup"
               className="inline-flex items-center gap-3 gradient-primary text-white text-xl font-bold py-4 px-10 rounded-2xl shadow-[0_10px_30px_rgba(78,143,104,0.4)] hover:shadow-[0_15px_40px_rgba(78,143,104,0.6)] transition-all duration-300 hover:scale-105 active:scale-95"
             >
-              {hasProfile ? <ArrowRight size={24} /> : <Upload size={24} />}
-              {hasProfile ? "Go to Dashboard" : "Get Started Free"}
+              <Upload size={24} />
+              Get Started Free
             </Link>
           </div>
 
