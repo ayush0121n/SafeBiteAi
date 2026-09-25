@@ -35,7 +35,7 @@ export function OnboardingPage() {
 
   const handleFinish = () => {
     save();
-    navigate("/app");
+    navigate("/login");
   };
 
   const steps = [
