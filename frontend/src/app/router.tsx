@@ -13,6 +13,7 @@ import { AdminLoginPage } from "../pages/AdminLoginPage";
 import { AdminDashboardPage } from "../pages/AdminDashboardPage";
 import { LoginPage } from "../pages/LoginPage";
 import { SignupPage } from "../pages/SignupPage";
+import { FeaturesHubPage } from "../pages/FeaturesHubPage";
 import { AppShell } from "../components/layout/AppShell";
 
 export const router = createBrowserRouter([
@@ -50,6 +51,7 @@ export const router = createBrowserRouter([
       { path: "/app/meal/results", element: <MealResultsPage /> },
       { path: "/app/history", element: <ScanHistoryPage /> },
       { path: "/app/profile", element: <ProfilePage /> },
+      { path: "/app/features", element: <FeaturesHubPage /> },
       { path: "/app/offline-check", element: <OfflineCheckPage /> },
     ],
   },

@@ -3,6 +3,7 @@ import { Upload, ShieldCheck, ShieldAlert, ShieldX, HelpCircle, TrendingUp, Cloc
 import { useScansStore } from "../features/scans/scans.store";
 import { useProfileStore } from "../features/profile/profile.store";
 import { DailyTracker } from "../components/tracker/DailyTracker";
+import { DashboardAnalysis } from "../components/dashboard/DashboardAnalysis";
 import type { ScanStatus } from "../api/types";
 
 const statusConfig: Record<ScanStatus, { Icon: typeof ShieldCheck; color: string; label: string }> = {
@@ -79,6 +80,9 @@ export function DashboardPage() {
 
       {/* Daily Meal Tracker */}
       <DailyTracker />
+
+      {/* Dashboard Analytics */}
+      <DashboardAnalysis />
 
       {/* Profile Summary */}
       {profile.allergies.length > 0 && (
