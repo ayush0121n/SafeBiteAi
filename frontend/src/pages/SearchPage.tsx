@@ -26,7 +26,11 @@ export function SearchPage() {
     setHasSearched(true);
     
     try {
-      const res = await fetch(`https://${region}.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1`);
+      let url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1`;
+      if (region === "in") {
+        url += "&tagtype_0=countries&tag_contains_0=contains&tag_0=india";
+      }
+      const res = await fetch(url);
       const data = await res.json();
       if (data.products && Array.isArray(data.products)) {
         setResults(data.products.slice(0, 10)); // limit to 10
