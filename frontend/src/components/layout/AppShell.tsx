@@ -124,10 +124,24 @@ export function AppShell() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 w-full p-4 md:p-8 pb-24 md:pb-8 overflow-y-auto">
-        <div className="max-w-4xl mx-auto">
+      <main className="flex-1 w-full p-4 md:p-8 pb-24 md:pb-8 overflow-y-auto flex flex-col">
+        <div className="max-w-4xl mx-auto flex-1 w-full">
           <Outlet />
         </div>
+        
+        {/* App Dashboard Footer */}
+        <footer className="mt-12 border-t border-[var(--color-border)] pt-6 pb-2 text-center text-[var(--color-muted)] text-sm">
+          <div className="flex flex-col items-center justify-center gap-2">
+            <div className="flex items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
+              <ShieldCheck size={16} className="text-[var(--color-primary)]" />
+              <span className="font-bold text-[var(--color-text)]">SafeBite AI</span>
+            </div>
+            <p className="max-w-md mx-auto text-xs opacity-70">
+              This app provides educational guidance and ML-driven estimates. It does not replace professional medical advice.
+            </p>
+            <p className="text-xs opacity-60 mt-2">© 2026 Ayush Narkhede · MIT License</p>
+          </div>
+        </footer>
       </main>
 
       {/* Bottom Navigation (Mobile Only) */}
