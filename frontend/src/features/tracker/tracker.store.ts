@@ -96,7 +96,7 @@ export const useTrackerStore = create<TrackerState>((set, get) => {
       try {
         // Persist to Supabase
         const saved = await saveMeal({
-          foodNames: [meal.name],
+          name: meal.name,
           calories: meal.calories,
           protein: meal.protein,
           carbs: meal.carbs,

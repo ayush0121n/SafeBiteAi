@@ -51,7 +51,7 @@ export const saveMeal = async (meal: Partial<LoggedMeal>, scanType: 'label' | 'm
     .insert({
       user_id: userId,
       date: new Date().toISOString().split('T')[0], // YYYY-MM-DD
-      food_names: meal.foodNames || [],
+      food_names: meal.name ? [meal.name] : [],
       calories: meal.calories || 0,
       protein: meal.protein || 0,
       carbs: meal.carbs || 0,
