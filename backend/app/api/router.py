@@ -94,20 +94,50 @@ async def create_scan(
         ocr_confidence = 0.92
 
     product_name = file.filename.rsplit(".", 1)[0].replace("-", " ").replace("_", " ").title() if file.filename else "Food Label"
-    raw_text = ocr_text if len(ocr_text) > 10 else "Ingredients: Rolled Oats, Sugar, Palm Oil, Corn Syrup, Whey Powder, Salt, Soy Lecithin. May contain peanuts and tree nuts."
-
     
-    # Nutrition mock (since OCR.space just returns unstructured text, we still mock nutrition values for MVP)
-    nutrition = {
-        "serving_size": "1 bar (35g)",
-        "calories": 170,
-        "total_sugar_g": 12,
-        "added_sugar_g": 9,
-        "sodium_mg": 180,
-        "saturated_fat_g": 3.5,
-        "fiber_g": 1,
-        "protein_g": 2,
-    }
+    # Attempt to get real data from OpenFoodFacts using the product_name
+    real_ingredients = ""
+    real_nutrition = {}
+    try:
+        import httpx
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            off_res = await client.get(f"https://world.openfoodfacts.org/cgi/search.pl?search_terms={product_name}&search_simple=1&action=process&json=1")
+            if off_res.status_code == 200:
+                off_data = off_res.json()
+                if off_data.get("products") and len(off_data["products"]) > 0:
+                    best_match = off_data["products"][0]
+                    product_name = best_match.get("product_name", product_name)
+                    real_ingredients = best_match.get("ingredients_text_en") or best_match.get("ingredients_text") or ""
+                    nut = best_match.get("nutriments", {})
+                    real_nutrition = {
+                        "serving_size": "100g",
+                        "calories": nut.get("energy-kcal_100g", 0),
+                        "total_sugar_g": nut.get("sugars_100g", 0),
+                        "added_sugar_g": nut.get("added-sugars_100g", 0),
+                        "sodium_mg": (nut.get("sodium_100g", 0) * 1000) if nut.get("sodium_100g") else 0,
+                        "saturated_fat_g": nut.get("saturated-fat_100g", 0),
+                        "fiber_g": nut.get("fiber_100g", 0),
+                        "protein_g": nut.get("proteins_100g", 0),
+                    }
+    except Exception as e:
+        print(f"OFF Search Error: {e}")
+
+    raw_text = real_ingredients if real_ingredients else (ocr_text if len(ocr_text) > 10 else "Ingredients: Rolled Oats, Sugar, Palm Oil, Corn Syrup, Whey Powder, Salt, Soy Lecithin. May contain peanuts and tree nuts.")
+    
+    if real_nutrition:
+        nutrition = real_nutrition
+    else:
+        # Nutrition mock fallback
+        nutrition = {
+            "serving_size": "1 bar (35g)",
+            "calories": 170,
+            "total_sugar_g": 12,
+            "added_sugar_g": 9,
+            "sodium_mg": 180,
+            "saturated_fat_g": 3.5,
+            "fiber_g": 1,
+            "protein_g": 2,
+        }
 
     # 1. Ingredient parsing
     raw_ingredients, allergy_stmt = parse_ingredients_text(raw_text)
@@ -218,7 +248,7 @@ async def get_scan_image(scan_id: str):
 
 @api_router.get("/api/v1/scans")
 async def list_scans():
-    return {"scans": []}
+    return {"scans": list(SCAN_DB.values())}
 
 
 @api_router.delete("/api/v1/scans/{scan_id}")
