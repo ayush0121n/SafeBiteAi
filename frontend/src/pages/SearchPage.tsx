@@ -1,24 +1,42 @@
 import { useState } from "react";
-import { Search, Package, ArrowRight } from "lucide-react";
+import { Search, Package, ArrowRight, AlertCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+
+interface OFFProduct {
+  id: string;
+  product_name?: string;
+  brands?: string;
+  image_front_small_url?: string;
+}
 
 export function SearchPage() {
   const [query, setQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
-  const navigate = useNavigate();
+  const [results, setResults] = useState<OFFProduct[]>([]);
+  const [error, setError] = useState("");
+  const [hasSearched, setHasSearched] = useState(false);
 
-  // Mock search results for Phase 1
-  const mockResults = [
-    { id: "prod_1", name: "Organic Almond Milk", brand: "Silk", status: "safe", icon: "🥛" },
-    { id: "prod_2", name: "Spicy Nacho Chips", brand: "Doritos", status: "avoid", icon: "🥨" },
-    { id: "prod_3", name: "Gluten-Free Oats", brand: "Quaker", status: "caution", icon: "🥣" },
-  ];
-
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
+    
     setIsSearching(true);
-    setTimeout(() => setIsSearching(false), 800); // Simulate network delay
+    setError("");
+    setHasSearched(true);
+    
+    try {
+      const res = await fetch(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1`);
+      const data = await res.json();
+      if (data.products && Array.isArray(data.products)) {
+        setResults(data.products.slice(0, 10)); // limit to 10
+      } else {
+        setResults([]);
+      }
+    } catch (err) {
+      setError("Failed to fetch products. Please try again.");
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   return (
@@ -26,7 +44,7 @@ export function SearchPage() {
       <div className="text-center mb-8">
         <h1 className="text-3xl font-extrabold text-[var(--color-text)] mb-3">Food Intelligence Search</h1>
         <p className="text-[var(--color-muted)] text-lg">
-          Search for any product to instantly see its nutrition, allergens, and health risks.
+          Search for any product to instantly see its nutrition, allergens, and health risks using live OpenFoodFacts data.
         </p>
       </div>
 
@@ -43,38 +61,43 @@ export function SearchPage() {
         />
         <button
           type="submit"
-          className="absolute inset-y-2 right-2 px-6 bg-[var(--color-primary)] hover:opacity-90 text-white font-bold rounded-xl transition-opacity flex items-center"
+          disabled={isSearching}
+          className="absolute inset-y-2 right-2 px-6 bg-[var(--color-primary)] hover:opacity-90 disabled:opacity-50 text-white font-bold rounded-xl transition-opacity flex items-center"
         >
           {isSearching ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : "Search"}
         </button>
       </form>
 
-      {!isSearching && query.length > 0 && (
+      {error && (
+        <div className="bg-red-50 text-red-700 p-4 rounded-xl flex items-center gap-2 font-bold mb-8">
+          <AlertCircle size={20} />
+          {error}
+        </div>
+      )}
+
+      {!isSearching && hasSearched && results.length > 0 && (
         <div className="space-y-4">
-          <h2 className="text-lg font-bold text-[var(--color-text)] mb-4">Results for "{query}"</h2>
-          {mockResults.map((product) => (
+          <h2 className="text-lg font-bold text-[var(--color-text)] mb-4">Live Results for "{query}"</h2>
+          {results.map((product) => (
             <Link
               key={product.id}
               to={`/app/product/${product.id}`}
               className="flex items-center justify-between p-4 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl hover:shadow-md transition-shadow group"
             >
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-[var(--color-bg)] rounded-xl flex items-center justify-center text-2xl">
-                  {product.icon}
+                <div className="w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center overflow-hidden shrink-0">
+                  {product.image_front_small_url ? (
+                    <img src={product.image_front_small_url} alt={product.product_name} className="w-full h-full object-cover" />
+                  ) : (
+                    <Package size={24} className="text-gray-400" />
+                  )}
                 </div>
                 <div>
-                  <h3 className="font-bold text-[var(--color-text)] text-lg">{product.name}</h3>
-                  <p className="text-[var(--color-muted)] text-sm">{product.brand}</p>
+                  <h3 className="font-bold text-[var(--color-text)] text-lg line-clamp-1">{product.product_name || "Unknown Product"}</h3>
+                  <p className="text-[var(--color-muted)] text-sm line-clamp-1">{product.brands || "Unknown Brand"}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <span className={`px-3 py-1 rounded-full text-xs font-bold capitalize ${
-                  product.status === 'safe' ? 'bg-green-100 text-green-700' :
-                  product.status === 'avoid' ? 'bg-red-100 text-red-700' :
-                  'bg-orange-100 text-orange-700'
-                }`}>
-                  {product.status}
-                </span>
+              <div className="flex items-center gap-4 shrink-0">
                 <ArrowRight className="text-[var(--color-muted)] group-hover:text-[var(--color-primary)] group-hover:translate-x-1 transition-all" />
               </div>
             </Link>
@@ -82,12 +105,22 @@ export function SearchPage() {
         </div>
       )}
 
-      {query.length === 0 && (
+      {!isSearching && hasSearched && results.length === 0 && !error && (
+        <div className="text-center py-12 px-4 border-2 border-dashed border-[var(--color-border)] rounded-2xl">
+          <Package size={48} className="mx-auto text-[var(--color-muted)] mb-4 opacity-50" />
+          <h3 className="text-xl font-bold text-[var(--color-text)] mb-2">No products found</h3>
+          <p className="text-[var(--color-muted)] max-w-md mx-auto">
+            We couldn't find any exact matches for "{query}". Try a different keyword or brand.
+          </p>
+        </div>
+      )}
+
+      {!hasSearched && (
         <div className="text-center py-12 px-4 border-2 border-dashed border-[var(--color-border)] rounded-2xl">
           <Package size={48} className="mx-auto text-[var(--color-muted)] mb-4 opacity-50" />
           <h3 className="text-xl font-bold text-[var(--color-text)] mb-2">Start Exploring</h3>
           <p className="text-[var(--color-muted)] max-w-md mx-auto">
-            Discover detailed insights about your favorite foods, including NOVA processing scores, personalized safety verdicts, and safer alternatives.
+            Discover detailed insights about your favorite foods directly from the world's largest open food database.
           </p>
         </div>
       )}
