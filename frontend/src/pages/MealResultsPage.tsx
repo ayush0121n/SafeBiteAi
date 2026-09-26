@@ -1,125 +1,72 @@
-import { useLocation, useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus, Check } from "lucide-react";
-import { useState } from "react";
-import { useTrackerStore } from "../features/tracker/tracker.store";
+import { useLocation, Link } from "react-router-dom";
+import { ArrowLeft, Utensils, Flame, Info } from "lucide-react";
 
 export function MealResultsPage() {
-  const { state } = useLocation();
-  const navigate = useNavigate();
-  const addLog = useTrackerStore((s) => s.addLog);
-  const [added, setAdded] = useState(false);
-
-  const result = state?.result;
+  const location = useLocation();
+  const result = location.state?.result;
 
   if (!result) {
     return (
-      <div className="p-6 text-center">
-        <p>No results found.</p>
-        <button onClick={() => navigate("/app/scan")} className="text-blue-500 underline mt-4">Go back</button>
+      <div className="text-center py-12">
+        <h2 className="text-2xl font-bold mb-4">No Result Found</h2>
+        <Link to="/app/scan" className="text-[var(--color-primary)] font-bold">Go back and scan</Link>
       </div>
     );
   }
 
-  const { foods, total_nutrition, imageUrl } = result;
-
-  const handleAddLog = () => {
-    // Add all detected foods as a single meal log or individual logs
-    // We'll log it as a combined meal for simplicity
-    addLog({
-      name: foods.map((f: any) => f.name).join(" + "),
-      calories: total_nutrition.calories,
-      protein: total_nutrition.protein_g,
-      carbs: total_nutrition.carbs_g,
-      fat: total_nutrition.fat_g
-    });
-    setAdded(true);
-    setTimeout(() => setAdded(false), 3000);
-  };
-
   return (
-    <div className="space-y-6 pb-12 animate-fade-in">
-      <button 
-        onClick={() => navigate(-1)}
-        className="flex items-center gap-2 text-[var(--color-muted)] hover:text-[var(--color-text)] transition-colors"
-      >
-        <ArrowLeft size={20} />
-        Back to Scanner
-      </button>
+    <div className="max-w-2xl mx-auto py-8 animate-fade-in space-y-6">
+      <Link to="/app/scan" className="text-[var(--color-muted)] hover:text-[var(--color-text)] font-bold flex items-center gap-2 mb-6 text-sm">
+        <ArrowLeft size={16} /> Back to Scanner
+      </Link>
 
-      <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl overflow-hidden shadow-sm">
-        {imageUrl && (
-          <div className="bg-gray-100 p-4 border-b border-[var(--color-border)] text-center">
-            <img src={imageUrl} alt="Meal" className="max-h-[300px] mx-auto rounded-lg shadow-sm" />
-          </div>
-        )}
-        
-        <div className="p-6">
-          <div className="flex justify-between items-start mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-[var(--color-text)] mb-1">Meal Detected</h2>
-              <p className="text-[var(--color-muted)]">Found {foods?.length || 0} items</p>
-            </div>
-            <div className="text-right">
-              <p className="text-3xl font-bold text-[var(--color-primary)]">{Math.round(total_nutrition.calories)}</p>
-              <p className="text-xs font-bold text-[var(--color-muted)] uppercase tracking-wider">kcal</p>
-            </div>
-          </div>
+      <div className="bg-[var(--color-surface)] border border-[var(--color-border)] p-8 rounded-3xl shadow-sm text-center">
+        <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Utensils size={32} className="text-orange-500" />
+        </div>
+        <h1 className="text-3xl font-extrabold text-[var(--color-text)] mb-2 capitalize">
+          {result.detected_food || "Meal Detected"}
+        </h1>
+        <p className="text-[var(--color-muted)]">Estimated macros based on visual analysis</p>
+      </div>
 
-          <div className="flex gap-4 mb-8 text-center border-y border-[var(--color-border)] py-4">
-            <div className="flex-1">
-              <p className="text-lg font-bold text-blue-600">{Math.round(total_nutrition.protein_g)}g</p>
-              <p className="text-xs font-bold text-[var(--color-muted)] uppercase tracking-wider">Protein</p>
-            </div>
-            <div className="flex-1 border-x border-[var(--color-border)]">
-              <p className="text-lg font-bold text-green-600">{Math.round(total_nutrition.carbs_g)}g</p>
-              <p className="text-xs font-bold text-[var(--color-muted)] uppercase tracking-wider">Carbs</p>
-            </div>
-            <div className="flex-1">
-              <p className="text-lg font-bold text-orange-600">{Math.round(total_nutrition.fat_g)}g</p>
-              <p className="text-xs font-bold text-[var(--color-muted)] uppercase tracking-wider">Fat</p>
-            </div>
+      <div className="bg-[var(--color-surface)] border border-[var(--color-border)] p-6 rounded-2xl shadow-sm">
+        <h2 className="text-xl font-bold text-[var(--color-text)] mb-6 flex items-center gap-2">
+          <Flame className="text-orange-500" /> Nutritional Breakdown
+        </h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="bg-[var(--color-bg)] p-4 rounded-xl text-center border border-[var(--color-border)]">
+            <p className="text-sm text-[var(--color-muted)] mb-1">Calories</p>
+            <p className="text-2xl font-bold text-[var(--color-text)]">{result.macros?.calories || 0}</p>
           </div>
-
-          <h3 className="font-bold text-[var(--color-text)] mb-3 text-sm uppercase tracking-wider text-[var(--color-muted)]">Detected Items</h3>
-          <div className="space-y-3 mb-8">
-            {foods?.map((food: any, i: number) => (
-              <div key={i} className="flex justify-between items-center p-3 rounded-xl bg-[var(--color-bg)] border border-[var(--color-border)]">
-                <div>
-                  <p className="font-bold text-[var(--color-text)] flex items-center gap-2">
-                    {food.name}
-                    <span className="text-xs font-medium text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full">
-                      {Math.round(food.confidence * 100)}% Match
-                    </span>
-                  </p>
-                  <p className="text-xs text-[var(--color-muted)] mt-1">
-                    {food.nutrition.serving_g}g serving
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="font-bold text-[var(--color-text)]">{Math.round(food.nutrition.calories)} kcal</p>
-                  <p className="text-[10px] text-[var(--color-muted)] font-medium">
-                    P:{Math.round(food.nutrition.protein_g)} C:{Math.round(food.nutrition.carbs_g)} F:{Math.round(food.nutrition.fat_g)}
-                  </p>
-                </div>
-              </div>
-            ))}
+          <div className="bg-[var(--color-bg)] p-4 rounded-xl text-center border border-[var(--color-border)]">
+            <p className="text-sm text-[var(--color-muted)] mb-1">Protein</p>
+            <p className="text-2xl font-bold text-blue-500">{result.macros?.protein || 0}g</p>
           </div>
-
-          <button
-            onClick={handleAddLog}
-            disabled={added}
-            className={`w-full flex justify-center items-center gap-2 py-4 rounded-xl text-white font-bold shadow-md transition-all ${
-              added ? "bg-green-500" : "gradient-primary hover:shadow-lg"
-            }`}
-          >
-            {added ? (
-              <><Check size={20} /> Added to Today's Log</>
-            ) : (
-              <><Plus size={20} /> Add to Today's Log</>
-            )}
-          </button>
+          <div className="bg-[var(--color-bg)] p-4 rounded-xl text-center border border-[var(--color-border)]">
+            <p className="text-sm text-[var(--color-muted)] mb-1">Carbs</p>
+            <p className="text-2xl font-bold text-green-500">{result.macros?.carbs || 0}g</p>
+          </div>
+          <div className="bg-[var(--color-bg)] p-4 rounded-xl text-center border border-[var(--color-border)]">
+            <p className="text-sm text-[var(--color-muted)] mb-1">Fat</p>
+            <p className="text-2xl font-bold text-orange-500">{result.macros?.fat || 0}g</p>
+          </div>
         </div>
       </div>
+
+      {result.allergens && result.allergens.length > 0 ? (
+        <div className="bg-red-50 border border-red-200 p-6 rounded-2xl">
+          <h3 className="font-bold text-red-700 mb-2">⚠️ Potential Allergens Detected</h3>
+          <ul className="list-disc list-inside text-red-600">
+            {result.allergens.map((a: string, i: number) => <li key={i}>{a}</li>)}
+          </ul>
+        </div>
+      ) : (
+        <div className="bg-green-50 border border-green-200 p-4 rounded-xl flex items-center gap-3">
+          <Info className="text-green-600" />
+          <p className="font-bold text-green-700 text-sm">No apparent allergens detected in this image.</p>
+        </div>
+      )}
     </div>
   );
 }
