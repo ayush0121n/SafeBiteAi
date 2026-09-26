@@ -20,7 +20,22 @@ export function FeatureDetailsPage() {
     setResult(null);
     setTimeout(() => {
       setRunning(false);
-      setResult(`Simulation completed successfully! Analyzed ${filePreview ? 'image data' : 'text input'} with 94.2% confidence. Model identified key attributes matching SafeBite's safety standards.`);
+      
+      let res = `Simulation completed successfully! Analyzed ${filePreview ? 'image data' : 'text input'} with 94.2% confidence. Model identified key attributes matching SafeBite's safety standards.`;
+      
+      if (featureId === "allergen-cross-contamination") {
+        res = "Allergen Output: Detected vague 'may contain nuts' statement via OCR. Cross-referenced with DB. Probability of peanut trace: High (84%). Caution advised for nut allergies.";
+      } else if (featureId === "hidden-sugar-detector") {
+        res = "Sugar Output: Identified 'Maltodextrin' and 'Dextrose' in ingredient list. NOVA classification: Group 4 (Ultra-processed). Sugar density score: 7/10.";
+      } else if (featureId === "medication-interaction") {
+        res = "Medication Output: Detected grapefruit extract. Warning: Known severe interaction with Statins. Alert triggered.";
+      } else if (featureId === "plate-macro-estimate") {
+        res = "Plate Output: ViT model recognized Grilled Salmon and Quinoa. Estimated macros: 420 kcal, 35g Protein, 25g Carbs, 18g Fat.";
+      } else if (featureId === "real-time-label-quality") {
+        res = "Quality Output: Image sharpness score is 89/100. Lighting is adequate. Label is readable. OCR engine cleared for processing.";
+      }
+      
+      setResult(res);
     }, 2500);
   };
 
