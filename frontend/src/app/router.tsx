@@ -16,11 +16,13 @@ import { SignupPage } from "../pages/SignupPage";
 import { FeaturesHubPage } from "../pages/FeaturesHubPage";
 import { FeatureDetailsPage } from "../pages/FeatureDetailsPage";
 import { AppShell } from "../components/layout/AppShell";
+import { GlobalErrorBoundary } from "../components/layout/GlobalErrorBoundary";
 
 export const router = createBrowserRouter([
   {
     path: "/",
     element: <LandingPage />,
+    errorElement: <GlobalErrorBoundary />,
   },
   {
     path: "/onboarding",
@@ -44,6 +46,7 @@ export const router = createBrowserRouter([
   },
   {
     element: <AppShell />,
+    errorElement: <GlobalErrorBoundary />,
     children: [
       { path: "/app", element: <DashboardPage /> },
       { path: "/app/scan", element: <NewScanPage /> },
