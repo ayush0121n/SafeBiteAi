@@ -1,11 +1,11 @@
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, PlayCircle, CheckCircle, Upload, Type } from "lucide-react";
+import { ArrowLeft, PlayCircle, CheckCircle, Upload, Type, Activity, Database, AlertTriangle, ShieldCheck } from "lucide-react";
 import { useState, useRef } from "react";
 
 export function FeatureDetailsPage() {
   const { featureId } = useParams();
   const [running, setRunning] = useState(false);
-  const [result, setResult] = useState<string | null>(null);
+  const [result, setResult] = useState<any>(null);
   const [inputText, setInputText] = useState("");
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -21,18 +21,59 @@ export function FeatureDetailsPage() {
     setTimeout(() => {
       setRunning(false);
       
-      let res = `Simulation completed successfully! Analyzed ${filePreview ? 'image data' : 'text input'} with 94.2% confidence. Model identified key attributes matching SafeBite's safety standards.`;
+      let res: any = {
+        title: "Simulation completed successfully",
+        description: `Analyzed ${filePreview ? 'image data' : 'text input'} with high confidence. Model identified key attributes matching SafeBite's safety standards.`,
+        confidence: "94.2%",
+        latency: "420ms",
+        stages: [
+          { name: "Image Preprocessing", status: "success", detail: "Sharpening & Contrast Adjusted" },
+          { name: "OCR / Vision Model", status: "success", detail: "Text extracted successfully" }
+        ],
+        alerts: []
+      };
       
       if (featureId === "allergen-cross-contamination") {
-        res = "Allergen Output: Detected vague 'may contain nuts' statement via OCR. Cross-referenced with DB. Probability of peanut trace: High (84%). Caution advised for nut allergies.";
+        res.title = "High Risk of Cross-Contamination Detected";
+        res.description = "The pipeline identified vague allergen statements commonly associated with shared equipment.";
+        res.confidence = "84.5%";
+        res.stages.push({ name: "Cross-Reference DB", status: "success", detail: "Matched known manufacturer facility data" });
+        res.alerts = [
+          { type: "critical", message: "Detected: 'May contain nuts'" },
+          { type: "warning", message: "Probability of peanut trace: High (84%)" },
+          { type: "info", message: "Recommendation: Avoid if severe nut allergy is present." }
+        ];
       } else if (featureId === "hidden-sugar-detector") {
-        res = "Sugar Output: Identified 'Maltodextrin' and 'Dextrose' in ingredient list. NOVA classification: Group 4 (Ultra-processed). Sugar density score: 7/10.";
+        res.title = "Hidden Sugars Identified";
+        res.description = "The system successfully parsed disguised sugar aliases from the ingredient block.";
+        res.confidence = "98.1%";
+        res.stages.push({ name: "NLP Alias Matching", status: "success", detail: "Found 2 hidden sugar variants" });
+        res.alerts = [
+          { type: "warning", message: "Identified 'Maltodextrin' and 'Dextrose'" },
+          { type: "critical", message: "NOVA classification: Group 4 (Ultra-processed)" },
+          { type: "info", message: "Sugar density score: 7/10 (High)" }
+        ];
       } else if (featureId === "medication-interaction") {
-        res = "Medication Output: Detected grapefruit extract. Warning: Known severe interaction with Statins. Alert triggered.";
+        res.title = "Severe Medication Interaction Alert";
+        res.description = "Food compounds detected that may interfere with known prescription pathways.";
+        res.confidence = "99.9%";
+        res.stages.push({ name: "Pharmacokinetics DB Query", status: "success", detail: "Checked against top 500 drug interactions" });
+        res.alerts = [
+          { type: "critical", message: "Detected: Grapefruit Extract" },
+          { type: "critical", message: "Known severe interaction with Statins (CYP3A4 inhibition)" },
+          { type: "warning", message: "Alert automatically triggered for user profiles with Statin prescriptions." }
+        ];
       } else if (featureId === "plate-macro-estimate") {
-        res = "Plate Output: ViT model recognized Grilled Salmon and Quinoa. Estimated macros: 420 kcal, 35g Protein, 25g Carbs, 18g Fat.";
-      } else if (featureId === "real-time-label-quality") {
-        res = "Quality Output: Image sharpness score is 89/100. Lighting is adequate. Label is readable. OCR engine cleared for processing.";
+        res.title = "Meal Segmented & Macros Estimated";
+        res.description = "Vision transformer successfully isolated food items and estimated volume/weight.";
+        res.confidence = "89.4%";
+        res.latency = "850ms";
+        res.stages.push({ name: "Semantic Segmentation", status: "success", detail: "2 primary food regions identified" });
+        res.alerts = [
+          { type: "info", message: "Detected: Grilled Salmon (est. 150g)" },
+          { type: "info", message: "Detected: Quinoa (est. 100g)" },
+          { type: "info", message: "Total Estimated Macros: 420 kcal | 35g Pro | 25g Carb | 18g Fat" }
+        ];
       }
       
       setResult(res);
@@ -118,12 +159,57 @@ export function FeatureDetailsPage() {
         </div>
 
         {result && (
-          <div className="mt-8 p-6 bg-green-50 border border-green-200 rounded-xl flex items-start gap-4 animate-slide-up">
-            <CheckCircle className="text-green-600 mt-1 flex-shrink-0" size={28} />
-            <div>
-              <h3 className="font-bold text-green-900 text-lg mb-1">AI Pipeline Success</h3>
-              <p className="text-green-800">{result}</p>
+          <div className="mt-8 animate-slide-up space-y-6">
+            <div className="p-6 bg-green-50 border border-green-200 rounded-xl flex flex-col md:flex-row md:items-start gap-4">
+              <CheckCircle className="text-green-600 mt-1 flex-shrink-0" size={32} />
+              <div className="flex-1">
+                <h3 className="font-bold text-green-900 text-xl mb-2">{result.title}</h3>
+                <p className="text-green-800 text-lg mb-4">{result.description}</p>
+                
+                <div className="flex flex-wrap gap-4 mb-4">
+                  <div className="bg-white/60 px-3 py-1.5 rounded-lg border border-green-100 flex items-center gap-2 text-sm font-bold text-green-900">
+                    <Activity size={16} className="text-green-600" />
+                    Confidence: {result.confidence}
+                  </div>
+                  <div className="bg-white/60 px-3 py-1.5 rounded-lg border border-green-100 flex items-center gap-2 text-sm font-bold text-green-900">
+                    <Database size={16} className="text-green-600" />
+                    Latency: {result.latency}
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <h4 className="font-bold text-green-900 border-b border-green-200 pb-1">Pipeline Stages Execution</h4>
+                  {result.stages.map((stage: any, i: number) => (
+                    <div key={i} className="flex items-center justify-between bg-white/50 p-2 rounded-lg text-sm">
+                      <span className="font-bold text-green-900">{stage.name}</span>
+                      <span className="text-green-700 italic">{stage.detail}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
+
+            {result.alerts.length > 0 && (
+              <div className="p-6 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-sm">
+                <h3 className="font-bold text-[var(--color-text)] text-lg mb-4 flex items-center gap-2">
+                  <AlertTriangle className="text-amber-500" /> Key Insights & Alerts
+                </h3>
+                <div className="space-y-3">
+                  {result.alerts.map((alert: any, i: number) => (
+                    <div key={i} className={`p-4 rounded-lg flex items-start gap-3 border ${
+                      alert.type === 'critical' ? 'bg-red-50 border-red-200 text-red-900' :
+                      alert.type === 'warning' ? 'bg-amber-50 border-amber-200 text-amber-900' :
+                      'bg-blue-50 border-blue-200 text-blue-900'
+                    }`}>
+                      {alert.type === 'critical' ? <AlertTriangle size={20} className="text-red-500 flex-shrink-0" /> :
+                       alert.type === 'warning' ? <AlertTriangle size={20} className="text-amber-500 flex-shrink-0" /> :
+                       <ShieldCheck size={20} className="text-blue-500 flex-shrink-0" />}
+                      <span className="font-bold text-sm leading-tight">{alert.message}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
