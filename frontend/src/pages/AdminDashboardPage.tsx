@@ -15,6 +15,27 @@ export function AdminDashboardPage() {
     experimentalOcr: false
   });
 
+  const [realScans, setRealScans] = useState<any[]>([]);
+  const [loadingScans, setLoadingScans] = useState(true);
+
+  useEffect(() => {
+    async function loadAdminData() {
+      try {
+        const { API_URL } = await import("../api/client");
+        const res = await fetch(`${API_URL}/api/v1/scans`);
+        const data = await res.json();
+        if (data.scans) {
+          setRealScans(data.scans.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+        }
+      } catch (err) {
+        console.error("Failed to load scans", err);
+      } finally {
+        setLoadingScans(false);
+      }
+    }
+    loadAdminData();
+  }, []);
+
   useEffect(() => {
     if (localStorage.getItem("safebite_admin_auth") !== "true") {
       navigate("/admin");
@@ -87,20 +108,71 @@ export function AdminDashboardPage() {
         <h2 className="text-2xl font-bold text-[var(--color-text)] mb-6 capitalize">{activeTab.replace("-", " ")}</h2>
 
         {activeTab === "overview" && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-             <div className="bg-[var(--color-surface)] p-6 rounded-2xl border border-[var(--color-border)] shadow-sm">
-                <p className="text-[var(--color-muted)] text-sm font-bold uppercase tracking-wider mb-2">Total Active Users</p>
-                <p className="text-4xl font-bold text-[var(--color-text)]">2,492</p>
-             </div>
-             <div className="bg-[var(--color-surface)] p-6 rounded-2xl border border-[var(--color-border)] shadow-sm">
-                <p className="text-[var(--color-muted)] text-sm font-bold uppercase tracking-wider mb-2">Scans Today</p>
-                <p className="text-4xl font-bold text-[var(--color-primary)]">14,801</p>
-             </div>
-             <div className="bg-[var(--color-avoid-bg)] p-6 rounded-2xl border border-[var(--color-avoid)] shadow-sm">
-                <p className="text-[var(--color-avoid)] text-sm font-bold uppercase tracking-wider mb-2">High Risk Alerts</p>
-                <p className="text-4xl font-bold text-[var(--color-avoid)]">843</p>
-             </div>
-          </div>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+               <div className="bg-[var(--color-surface)] p-6 rounded-2xl border border-[var(--color-border)] shadow-sm">
+                  <p className="text-[var(--color-muted)] text-sm font-bold uppercase tracking-wider mb-2">Total Scans (Live Server Memory)</p>
+                  <p className="text-4xl font-bold text-[var(--color-text)]">
+                    {loadingScans ? "..." : realScans.length}
+                  </p>
+               </div>
+               <div className="bg-[var(--color-surface)] p-6 rounded-2xl border border-[var(--color-border)] shadow-sm">
+                  <p className="text-[var(--color-muted)] text-sm font-bold uppercase tracking-wider mb-2">Safe Products</p>
+                  <p className="text-4xl font-bold text-[var(--color-safe)]">
+                    {loadingScans ? "..." : realScans.filter(s => s.status === 'safe').length}
+                  </p>
+               </div>
+               <div className="bg-[var(--color-avoid-bg)] p-6 rounded-2xl border border-[var(--color-avoid)] shadow-sm">
+                  <p className="text-[var(--color-avoid)] text-sm font-bold uppercase tracking-wider mb-2">High Risk / Avoid</p>
+                  <p className="text-4xl font-bold text-[var(--color-avoid)]">
+                    {loadingScans ? "..." : realScans.filter(s => s.status === 'avoid').length}
+                  </p>
+               </div>
+            </div>
+
+            <div className="bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border)] shadow-sm overflow-hidden">
+              <div className="p-6 border-b border-[var(--color-border)]">
+                <h3 className="font-bold text-[var(--color-text)]">Recent Live Scans</h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-[var(--color-border)] bg-[var(--color-bg)]">
+                      <th className="p-4 font-bold text-[var(--color-muted)] text-sm">Product Name</th>
+                      <th className="p-4 font-bold text-[var(--color-muted)] text-sm">Date</th>
+                      <th className="p-4 font-bold text-[var(--color-muted)] text-sm">Status</th>
+                      <th className="p-4 font-bold text-[var(--color-muted)] text-sm text-right">Confidence</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--color-border)]">
+                    {realScans.slice(0, 10).map((scan, idx) => (
+                      <tr key={idx} className="hover:bg-[var(--color-bg)] transition-colors">
+                        <td className="p-4 font-bold text-[var(--color-text)]">{scan.productName || "Unknown"}</td>
+                        <td className="p-4 text-[var(--color-muted)] text-sm">{new Date(scan.createdAt).toLocaleString()}</td>
+                        <td className="p-4">
+                          <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                            scan.status === "safe" ? "bg-green-100 text-green-700" :
+                            scan.status === "avoid" ? "bg-red-100 text-red-700" :
+                            "bg-orange-100 text-orange-700"
+                          }`}>
+                            {scan.status.toUpperCase()}
+                          </span>
+                        </td>
+                        <td className="p-4 text-right text-[var(--color-muted)] font-bold text-sm">
+                          {Math.round(scan.confidence?.overall * 100)}%
+                        </td>
+                      </tr>
+                    ))}
+                    {realScans.length === 0 && !loadingScans && (
+                      <tr>
+                        <td colSpan={4} className="p-8 text-center text-[var(--color-muted)]">No scans on the live server currently.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
         )}
 
          {activeTab === "ml-models" && (
