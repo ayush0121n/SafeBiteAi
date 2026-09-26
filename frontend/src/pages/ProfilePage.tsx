@@ -1,7 +1,7 @@
 import { useProfileStore } from "../features/profile/profile.store";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { User, LogOut } from "lucide-react";
+import { User, LogOut, Settings } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
 const COMMON_ALLERGIES = ["Peanuts", "Tree Nuts", "Milk", "Eggs", "Wheat", "Soy", "Fish", "Shellfish", "Sesame"];
@@ -257,7 +257,14 @@ export function ProfilePage() {
         {justSaved ? "✓ Saved!" : "Save Profile"}
       </button>
 
-      <div className="pt-4 mt-6 border-t border-gray-200">
+      <div className="pt-4 mt-6 border-t border-gray-200 space-y-3">
+        <button
+          onClick={() => navigate("/app/settings")}
+          className="w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold text-lg text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
+        >
+          <Settings size={20} />
+          App Settings
+        </button>
         <button
           onClick={handleLogout}
           className="w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold text-lg text-rose-600 bg-rose-50 hover:bg-rose-100 transition-colors"

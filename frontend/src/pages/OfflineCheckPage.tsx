@@ -2,18 +2,18 @@ import { ShieldAlert, Info, AlertTriangle } from "lucide-react";
 import { useProfileStore } from "../features/profile/profile.store";
 
 const allergenAliases: Record<string, string[]> = {
-  "Peanuts": ["Arachis oil", "Groundnuts", "Mandelonas", "Nu-Nuts", "Goober peas", "Monkey nuts"],
-  "Tree Nuts": ["Almond", "Brazil nut", "Cashew", "Chestnut", "Filbert", "Hazelnut", "Macadamia", "Pecan", "Pine nut", "Pistachio", "Walnut", "Marzipan", "Praline"],
-  "Milk": ["Butter", "Casein", "Cheese", "Cream", "Curds", "Ghee", "Lactose", "Paneer", "Whey", "Yogurt", "Lactalbumin"],
-  "Eggs": ["Albumin", "Globulin", "Lecithin", "Lysozyme", "Mayonnaise", "Meringue", "Ovalbumin", "Surimi"],
-  "Soy": ["Edamame", "Miso", "Natto", "Shoyu", "Soy sauce", "Tamari", "Tempeh", "Tofu", "Soya"],
-  "Wheat": ["Bran", "Bread crumbs", "Bulgur", "Couscous", "Durum", "Einkorn", "Emmer", "Farina", "Kamut", "Seitan", "Semolina", "Spelt"],
-  "Fish": ["Anchovies", "Bass", "Catfish", "Cod", "Flounder", "Grouper", "Haddock", "Hake", "Halibut", "Herring", "Mahi mahi", "Pike", "Pollock", "Salmon", "Snapper", "Sole", "Swordfish", "Tilapia", "Trout", "Tuna"],
-  "Shellfish": ["Barnacle", "Crab", "Crawfish", "Krill", "Lobster", "Prawns", "Shrimp", "Clams", "Mussels", "Oysters", "Scallops", "Squid", "Octopus"],
-  "Sesame": ["Benne", "Gingelly", "Halvah", "Sesamol", "Tahini", "Til"],
-  "Mollusks": ["Abalone", "Clam", "Cockle", "Cuttlefish", "Mussel", "Octopus", "Oyster", "Scallop", "Snail", "Squid"],
-  "Lupin": ["Lupine", "Lupin flour", "Lupin seed", "Lupin bean"],
-  "Mustard": ["Mustard powder", "Mustard seed", "Mustard leaves"]
+  "Peanuts": ["Arachis oil", "Groundnuts", "Mungphali", "Shengdana", "Goober peas", "Monkey nuts"],
+  "Tree Nuts": ["Almond (Badam)", "Cashew (Kaju)", "Walnut (Akhrot)", "Pistachio (Pista)", "Brazil nut", "Macadamia", "Pecan", "Pine nut"],
+  "Milk": ["Butter (Makhan)", "Casein", "Cheese", "Cream (Malai)", "Curds (Dahi)", "Ghee", "Paneer", "Whey", "Khoya", "Mawa"],
+  "Eggs": ["Anda", "Albumin", "Globulin", "Lecithin", "Lysozyme", "Mayonnaise", "Meringue", "Ovalbumin"],
+  "Soy": ["Edamame", "Soya chunk (Nutrela)", "Soy sauce", "Tamari", "Tempeh", "Tofu"],
+  "Wheat": ["Atta (Whole Wheat)", "Maida (Refined Flour)", "Suji/Rava (Semolina)", "Daliya (Bulgur)", "Bran", "Seitan", "Spelt"],
+  "Fish": ["Machli", "Anchovies", "Cod", "Herring", "Salmon", "Tuna", "Rohu", "Katla", "Pomfret", "Surmai"],
+  "Shellfish": ["Jhinga (Shrimp/Prawn)", "Crab (Kekda)", "Lobster", "Clams", "Mussels", "Oysters", "Squid"],
+  "Sesame": ["Til", "Gingelly", "Tahini", "Benne"],
+  "Mollusks": ["Abalone", "Clam", "Cuttlefish", "Mussel", "Octopus", "Oyster", "Scallop", "Squid"],
+  "Lupin": ["Lupine", "Lupin flour", "Lupin seed"],
+  "Mustard": ["Sarson (Mustard seed/oil)", "Rai", "Mustard powder"]
 };
 
 export function OfflineCheckPage() {
@@ -73,10 +73,11 @@ export function OfflineCheckPage() {
             Manual Checking Tips
          </h3>
          <ul className="text-[var(--color-muted)] space-y-2 list-disc list-inside text-sm">
-            <li>Check the <strong>"Contains:"</strong> statement usually found below the ingredients list.</li>
-            <li>Look out for <strong>"May contain"</strong> or <strong>"Produced in a facility that handles"</strong> warnings.</li>
-            <li>Ingredients are listed by weight, from most to least.</li>
-            <li>When in doubt, contact the manufacturer or avoid the product.</li>
+            <li>Look for the <strong>Green Dot 🟢</strong> (Vegetarian) or <strong>Brown Triangle 🔺</strong> (Non-Vegetarian) on Indian packaging. Eggs and meat fall under Non-Veg.</li>
+            <li>Check for the <strong>FSSAI Logo</strong> and License Number to ensure it's a regulated product.</li>
+            <li>Read the <strong>"Contains:"</strong> statement or Allergen Declaration usually found directly below the ingredients list in bold.</li>
+            <li>Look out for <strong>"May contain traces of"</strong> or <strong>"Manufactured in a facility that also processes"</strong> warnings.</li>
+            <li>Ingredients in India are listed by weight, from most to least. Hidden allergens are often at the end.</li>
          </ul>
       </div>
     </div>

@@ -19,6 +19,7 @@ import { SearchPage } from "../pages/SearchPage";
 import { ProductDetailPage } from "../pages/ProductDetailPage";
 import { MealResultsPage } from "../pages/MealResultsPage";
 import { LearnPage } from "../pages/LearnPage";
+import { SettingsPage } from "../pages/SettingsPage";
 import { AppShell } from "../components/layout/AppShell";
 import { GlobalErrorBoundary } from "../components/layout/GlobalErrorBoundary";
 
@@ -69,6 +70,7 @@ export const router = createBrowserRouter([
       { path: "/app/features/:featureId", element: <FeatureDetailsPage /> },
       { path: "/app/learn", element: <LearnPage /> },
       { path: "/app/offline-check", element: <OfflineCheckPage /> },
+      { path: "/app/settings", element: <SettingsPage /> },
     ],
   },
 ]);
