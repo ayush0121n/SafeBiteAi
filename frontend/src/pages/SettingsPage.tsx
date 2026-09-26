@@ -87,7 +87,7 @@ export function SettingsPage() {
             <div className="p-4 bg-[var(--color-bg)] rounded-xl border border-[var(--color-border)] space-y-4">
               <div>
                 <p className="text-sm text-[var(--color-muted)] uppercase font-bold tracking-wider mb-1">Email</p>
-                <p className="font-bold text-[var(--color-text)]">{profile.name.toLowerCase().replace(" ", "") || "user"}@example.com</p>
+                <p className="font-bold text-[var(--color-text)]">{(profile?.name || "user").toLowerCase().replace(" ", "")}@example.com</p>
               </div>
               <button type="button" className="text-red-500 font-bold hover:underline">
                 Delete Account
