@@ -31,20 +31,36 @@ export function ProductDetailPage() {
           } else if (p.nova_group === 4) {
             status = "caution";
           }
+          
+          const isHighSugar = p.nutriments?.sugars_100g > 15;
+          const isHighSalt = p.nutriments?.salt_100g > 1.5;
+
+          const risks = [];
+          if (p.nova_group === 4) {
+            risks.push({ condition: "General Health", desc: "Ultra-processed foods (NOVA 4) are linked to higher risks of chronic diseases and inflammation." });
+          }
+          if (isHighSugar && profile.conditions.includes("diabetes")) {
+            risks.push({ condition: "Diabetes Management", desc: "This product is high in sugar (>15g/100g), which may cause rapid blood glucose spikes." });
+          }
+          if (isHighSalt && profile.conditions.includes("hypertension")) {
+            risks.push({ condition: "Hypertension / Heart Health", desc: "This product is high in sodium, which can elevate blood pressure." });
+          }
 
           setProduct({
             name: p.product_name || "Unknown Product",
             brand: p.brands || "Unknown Brand",
             image: p.image_front_url,
             status,
-            sugar: p.nutriments?.sugars_100g > 15 ? "High" : "Low",
-            salt: p.nutriments?.salt_100g > 1.5 ? "High" : "Low",
+            sugar: isHighSugar ? "High" : "Low",
+            salt: isHighSalt ? "High" : "Low",
             fat: p.nutriments?.["saturated-fat_100g"] > 5 ? "High" : p.nutriments?.["saturated-fat_100g"] > 1 ? "Moderate" : "Low",
             nova: p.nova_group || "Unknown",
+            nutriscore: p.nutriscore_grade ? p.nutriscore_grade.toUpperCase() : null,
+            ecoscore: p.ecoscore_grade && p.ecoscore_grade !== 'unknown' ? p.ecoscore_grade.toUpperCase() : null,
+            ingredients: p.ingredients_text_en || p.ingredients_text || "Ingredients not available.",
+            additives: p.additives_tags ? p.additives_tags.map((a: string) => a.replace("en:", "")) : [],
             allergens: allergens,
-            risks: p.nova_group === 4 ? [
-              { condition: "General Health", desc: "Ultra-processed foods (NOVA 4) are linked to higher risks of chronic diseases." }
-            ] : []
+            risks
           });
         } else {
           setError("Product not found.");
@@ -102,7 +118,7 @@ export function ProductDetailPage() {
           <h1 className="text-3xl font-extrabold text-[var(--color-text)] mb-1">{product.name}</h1>
           <p className="text-lg text-[var(--color-muted)] font-medium mb-4">{product.brand}</p>
           
-          <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border ${
+          <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border mb-4 ${
             product.status === 'safe' ? 'bg-green-50 border-green-200 text-green-700' : 
             product.status === 'avoid' ? 'bg-red-50 border-red-200 text-red-700' : 
             'bg-orange-50 border-orange-200 text-orange-700'
@@ -110,7 +126,47 @@ export function ProductDetailPage() {
             {product.status === 'safe' ? <ShieldCheck size={24} /> : <ShieldAlert size={24} />}
             <span className="font-bold text-lg uppercase tracking-wider">{product.status} for you</span>
           </div>
+
+          <div className="flex gap-2 flex-wrap">
+            {product.nutriscore && (
+              <span className={`px-3 py-1 rounded-lg text-sm font-bold border ${
+                ['A','B'].includes(product.nutriscore) ? 'bg-green-100 text-green-800 border-green-200' :
+                product.nutriscore === 'C' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                'bg-red-100 text-red-800 border-red-200'
+              }`}>
+                Nutri-Score: {product.nutriscore}
+              </span>
+            )}
+            {product.ecoscore && (
+              <span className="px-3 py-1 rounded-lg text-sm font-bold border bg-teal-50 text-teal-800 border-teal-200">
+                Eco-Score: {product.ecoscore}
+              </span>
+            )}
+            <span className="px-3 py-1 rounded-lg text-sm font-bold border bg-slate-100 text-slate-800 border-slate-200">
+              NOVA: {product.nova}
+            </span>
+          </div>
         </div>
+      </div>
+
+      <div className="bg-[var(--color-surface)] border border-[var(--color-border)] p-6 rounded-2xl shadow-sm">
+        <h2 className="text-xl font-bold text-[var(--color-text)] mb-3 flex items-center gap-2">
+          <Package className="text-[var(--color-primary)]" size={24} /> Ingredients
+        </h2>
+        <p className="text-[var(--color-text)] leading-relaxed text-sm mb-4">
+          {product.ingredients}
+        </p>
+        
+        {product.additives.length > 0 && (
+          <div>
+            <h3 className="text-sm font-bold text-[var(--color-muted)] mb-2 uppercase tracking-wider">Detected Additives ({product.additives.length}):</h3>
+            <div className="flex flex-wrap gap-1.5">
+              {product.additives.map((a: string) => (
+                <span key={a} className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-semibold uppercase">{a.replace("-", " ")}</span>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
