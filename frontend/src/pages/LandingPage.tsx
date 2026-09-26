@@ -71,11 +71,10 @@ export function LandingPage() {
               {hasProfile ? "Scan Now" : "Start For Free"}
             </Link>
             <Link
-              to="/app"
+              to="/pricing"
               className="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-[var(--color-surface)]/80 backdrop-blur-md text-[var(--color-text)] border-2 border-[var(--color-border)] text-xl font-bold py-5 px-10 rounded-2xl hover:border-[var(--color-primary)] hover:bg-white transition-all shadow-sm"
             >
-              <ArrowRight size={24} className="text-[var(--color-primary)]" />
-              Explore App
+              Pricing
             </Link>
           </div>
 
@@ -192,8 +191,12 @@ export function LandingPage() {
           <p className="text-[var(--color-muted)] text-sm mb-4 bg-[var(--color-bg)] py-3 px-6 rounded-xl inline-block border border-[var(--color-border)]">
             <span className="font-bold text-[var(--color-text)]">Disclaimer:</span> SafeBite AI provides educational guidance only. It does not replace medical advice.
           </p>
-          <div className="flex items-center justify-center gap-4 text-[var(--color-muted)] text-sm mt-6">
+          <div className="flex flex-wrap items-center justify-center gap-4 text-[var(--color-muted)] text-sm mt-6">
             <p className="font-medium">© 2026 Ayush Narkhede · MIT License</p>
+            <span className="text-[var(--color-border)]">|</span>
+            <Link to="/pricing" className="font-bold hover:text-[var(--color-primary)] transition-colors">
+              Pricing & About
+            </Link>
             <span className="text-[var(--color-border)]">|</span>
             <Link to="/admin" className="font-bold hover:text-[var(--color-primary)] transition-colors">
               Admin Portal
