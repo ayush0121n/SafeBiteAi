@@ -27,7 +27,13 @@ export async function apiClient<T>(
         brand: "SafeBite Demo",
         ingredients: ["Water", "Organic Oats", "Honey"],
         flaggedIngredients: [],
-        concerns: [{ title: "No concerns found", description: "This is a mocked safe result because the backend was unreachable.", severity: "low" }],
+        allergens: [],
+        alternatives: [],
+        confidence: { ocr: 0.9, ingredients: 0.9, nutrition: 0.9 },
+        disclaimers: ["Educational guidance only."],
+        extractedText: { ingredientsRaw: "Water, Organic Oats, Honey", allergyStatement: "" },
+        nutrition: { calories: 120, sugarG: 5, sodiumMg: 50 },
+        concerns: [{ title: "No concerns found", plainLanguageReason: "This is a mocked safe result because the backend was unreachable.", level: "lower", factors: [] }],
         createdAt: new Date().toISOString(),
         imageUrl: null
       } as any;
