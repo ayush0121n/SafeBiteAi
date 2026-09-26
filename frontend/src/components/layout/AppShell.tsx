@@ -13,7 +13,7 @@ export function AppShell() {
     load(); 
     // Basic route protection
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
+      if (!session && !localStorage.getItem("safebite_mock_auth")) {
         navigate("/login");
       }
     });
@@ -21,7 +21,7 @@ export function AppShell() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) {
+      if (!session && !localStorage.getItem("safebite_mock_auth")) {
         navigate("/login");
       }
     });

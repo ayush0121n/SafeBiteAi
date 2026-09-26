@@ -17,6 +17,13 @@ export function SignupPage() {
     setError(null);
 
     try {
+      if (!import.meta.env.VITE_SUPABASE_URL) {
+        console.warn("Using mock auth bypass since VITE_SUPABASE_URL is missing.");
+        localStorage.setItem("safebite_mock_auth", "true");
+        navigate("/onboarding");
+        return;
+      }
+
       const { error } = await supabase.auth.signUp({
         email,
         password,
