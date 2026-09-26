@@ -14,6 +14,7 @@ import { AdminDashboardPage } from "../pages/AdminDashboardPage";
 import { LoginPage } from "../pages/LoginPage";
 import { SignupPage } from "../pages/SignupPage";
 import { FeaturesHubPage } from "../pages/FeaturesHubPage";
+import { FeatureDetailsPage } from "../pages/FeatureDetailsPage";
 import { AppShell } from "../components/layout/AppShell";
 
 export const router = createBrowserRouter([
@@ -52,6 +53,7 @@ export const router = createBrowserRouter([
       { path: "/app/history", element: <ScanHistoryPage /> },
       { path: "/app/profile", element: <ProfilePage /> },
       { path: "/app/features", element: <FeaturesHubPage /> },
+      { path: "/app/features/:featureId", element: <FeatureDetailsPage /> },
       { path: "/app/offline-check", element: <OfflineCheckPage /> },
     ],
   },

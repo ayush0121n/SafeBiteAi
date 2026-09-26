@@ -21,7 +21,7 @@ export function FeaturesHubPage() {
       icon: AlertTriangle,
       color: "text-red-500",
       bg: "bg-red-100",
-      status: "Beta"
+      status: "Active"
     },
     {
       id: "hidden-sugar-detector",
@@ -30,7 +30,7 @@ export function FeaturesHubPage() {
       icon: Activity,
       color: "text-orange-500",
       bg: "bg-orange-100",
-      status: "Beta"
+      status: "Active"
     },
     {
       id: "medication-interaction",
@@ -39,7 +39,7 @@ export function FeaturesHubPage() {
       icon: Pill,
       color: "text-purple-500",
       bg: "bg-purple-100",
-      status: "Beta"
+      status: "Active"
     },
     {
       id: "meal-estimator",
@@ -66,7 +66,7 @@ export function FeaturesHubPage() {
       icon: List,
       color: "text-teal-500",
       bg: "bg-teal-100",
-      status: "Coming Soon"
+      status: "Active"
     },
     {
       id: "recall-watch",
@@ -84,7 +84,7 @@ export function FeaturesHubPage() {
       icon: Baby,
       color: "text-pink-500",
       bg: "bg-pink-100",
-      status: "Coming Soon"
+      status: "Active"
     },
     {
       id: "hybrid-scan",
@@ -93,7 +93,7 @@ export function FeaturesHubPage() {
       icon: Barcode,
       color: "text-slate-500",
       bg: "bg-slate-100",
-      status: "Coming Soon"
+      status: "Active"
     },
     {
       id: "continuous-learning",
@@ -102,7 +102,7 @@ export function FeaturesHubPage() {
       icon: BrainCircuit,
       color: "text-indigo-500",
       bg: "bg-indigo-100",
-      status: "Future"
+      status: "Active"
     }
   ];
 
