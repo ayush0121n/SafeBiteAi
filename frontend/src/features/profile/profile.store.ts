@@ -4,17 +4,23 @@ import type { UserProfile } from "../../api/types";
 const STORAGE_KEY = "safebite_profile";
 
 function loadProfile(): UserProfile {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch {}
-  return {
+  const defaultProfile: UserProfile = {
     id: crypto.randomUUID(),
     allergies: [],
     conditions: [],
     preferences: [],
     accessibility: { largeText: false, highContrast: false, voiceReadout: false },
   };
+  
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return { ...defaultProfile, ...parsed };
+    }
+  } catch {}
+  
+  return defaultProfile;
 }
 
 interface ProfileStore {

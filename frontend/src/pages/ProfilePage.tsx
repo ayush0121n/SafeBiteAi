@@ -1,6 +1,8 @@
 import { useProfileStore } from "../features/profile/profile.store";
 import { useState } from "react";
-import { User, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { User, LogOut } from "lucide-react";
+import { supabase } from "../../lib/supabase";
 
 const COMMON_ALLERGIES = ["Peanuts", "Tree Nuts", "Milk", "Eggs", "Wheat", "Soy", "Fish", "Shellfish", "Sesame"];
 const CONDITIONS = [
@@ -22,6 +24,7 @@ export function ProfilePage() {
   const { profile, setAllergies, setConditions, setPreferences, setAccessibility, save } =
     useProfileStore();
   const [justSaved, setJustSaved] = useState(false);
+  const navigate = useNavigate();
 
   const toggle = <T,>(arr: T[], item: T): T[] =>
     arr.includes(item) ? arr.filter((v) => v !== item) : [...arr, item];
@@ -30,6 +33,12 @@ export function ProfilePage() {
     save();
     setJustSaved(true);
     setTimeout(() => setJustSaved(false), 2000);
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    localStorage.removeItem("safebite_mock_auth");
+    navigate("/login");
   };
 
   return (
@@ -139,6 +148,16 @@ export function ProfilePage() {
       >
         {justSaved ? "✓ Saved!" : "Save Profile"}
       </button>
+
+      <div className="pt-4 mt-6 border-t border-gray-200">
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold text-lg text-rose-600 bg-rose-50 hover:bg-rose-100 transition-colors"
+        >
+          <LogOut size={20} />
+          Log Out
+        </button>
+      </div>
     </div>
   );
 }

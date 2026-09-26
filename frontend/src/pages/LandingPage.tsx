@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 
 export function LandingPage() {
   const profile = useProfileStore((s) => s.profile);
-  const hasProfile = profile.allergies.length > 0 || profile.conditions.length > 0;
+  const hasProfile = (profile.allergies?.length > 0) || (profile.conditions?.length > 0);
   
   const [scrollY, setScrollY] = useState(0);
 
@@ -177,7 +177,7 @@ export function LandingPage() {
           <div className="text-center mt-20">
             <Link
               to={hasProfile ? "/app/scan" : "/onboarding"}
-              className="inline-flex items-center justify-center gap-3 btn-premium text-white text-2xl font-bold py-6 px-14 rounded-full shadow-[0_20px_40px_rgba(78,143,104,0.4)] hover:scale-105 active:scale-95 transition-all"
+              className="inline-flex items-center justify-center gap-3 gradient-primary text-white text-2xl font-bold py-6 px-14 rounded-full shadow-[0_20px_40px_rgba(78,143,104,0.4)] hover:scale-105 active:scale-95 transition-all"
             >
               Start Scanning Now
               <ArrowRight size={28} />

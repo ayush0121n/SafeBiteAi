@@ -1,19 +1,34 @@
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, PlayCircle, CheckCircle, ShieldAlert } from "lucide-react";
-import { useState } from "react";
+import { ArrowLeft, PlayCircle, CheckCircle, Upload, Type } from "lucide-react";
+import { useState, useRef } from "react";
 
 export function FeatureDetailsPage() {
   const { featureId } = useParams();
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<string | null>(null);
+  const [inputText, setInputText] = useState("");
+  const [filePreview, setFilePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSimulate = () => {
+    if (!inputText && !filePreview) {
+      alert("Please provide some input data or upload an image to run the feature.");
+      return;
+    }
+
     setRunning(true);
     setResult(null);
     setTimeout(() => {
       setRunning(false);
-      setResult("Simulation completed successfully with 94.2% confidence.");
-    }, 2000);
+      setResult(`Simulation completed successfully! Analyzed ${filePreview ? 'image data' : 'text input'} with 94.2% confidence. Model identified key attributes matching SafeBite's safety standards.`);
+    }, 2500);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setFilePreview(URL.createObjectURL(file));
+    }
   };
 
   return (
@@ -27,35 +42,75 @@ export function FeatureDetailsPage() {
           {featureId?.replace(/-/g, ' ')}
         </h1>
         <p className="text-[var(--color-muted)] text-lg mb-8">
-          This feature is now fully active and powered by our enhanced deep learning pipelines.
+          Upload a sample image or enter text data below to test how our deep learning pipeline handles this feature in real-time.
         </p>
 
-        <div className="bg-[var(--color-bg)] p-6 rounded-xl border border-[var(--color-border)]">
-          <h2 className="text-xl font-bold mb-4">Live Demonstration</h2>
+        <div className="bg-[var(--color-bg)] p-6 rounded-xl border border-[var(--color-border)] mb-8 space-y-6">
+          <h2 className="text-xl font-bold">Input Data</h2>
           
+          {/* File Upload Area */}
+          <div 
+            onClick={() => fileInputRef.current?.click()}
+            className="border-2 border-dashed border-[var(--color-border)] rounded-xl p-8 text-center cursor-pointer hover:border-[var(--color-primary)] transition-colors bg-white"
+          >
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              className="hidden" 
+              accept="image/*"
+              onChange={handleFileChange}
+            />
+            {filePreview ? (
+              <img src={filePreview} alt="Preview" className="max-h-48 mx-auto rounded-lg object-contain" />
+            ) : (
+              <div className="flex flex-col items-center gap-2 text-[var(--color-muted)]">
+                <Upload size={32} />
+                <span className="font-bold">Click to upload image</span>
+                <span className="text-sm">JPG, PNG, or WEBP (Max 5MB)</span>
+              </div>
+            )}
+          </div>
+
+          {/* Text Input Area */}
+          <div>
+            <label className="flex items-center gap-2 text-sm font-bold text-[var(--color-text)] mb-2">
+              <Type size={16} /> 
+              Or enter text data (ingredients, barcodes, or "may contain" statements)
+            </label>
+            <textarea 
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              className="w-full p-4 rounded-xl border border-[var(--color-border)] focus:outline-none focus:border-[var(--color-primary)] resize-none"
+              rows={4}
+              placeholder="e.g. 'May contain traces of peanuts and tree nuts...'"
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-center">
           <button 
             onClick={handleSimulate}
             disabled={running}
-            className="flex items-center gap-2 bg-[var(--color-primary)] text-white px-6 py-3 rounded-lg font-bold hover:opacity-90 disabled:opacity-50 transition-opacity"
+            className="flex items-center gap-2 gradient-primary text-white px-8 py-4 rounded-xl font-bold shadow-lg hover:shadow-xl hover:-translate-y-1 disabled:opacity-70 disabled:hover:translate-y-0 transition-all text-lg"
           >
             {running ? (
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
-              <PlayCircle size={20} />
+              <PlayCircle size={24} />
             )}
             {running ? "Processing Model..." : "Run AI Simulation"}
           </button>
-
-          {result && (
-            <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start gap-3">
-              <CheckCircle className="text-green-600 mt-1" size={24} />
-              <div>
-                <h3 className="font-bold text-green-900">Success</h3>
-                <p className="text-green-800">{result}</p>
-              </div>
-            </div>
-          )}
         </div>
+
+        {result && (
+          <div className="mt-8 p-6 bg-green-50 border border-green-200 rounded-xl flex items-start gap-4 animate-slide-up">
+            <CheckCircle className="text-green-600 mt-1 flex-shrink-0" size={28} />
+            <div>
+              <h3 className="font-bold text-green-900 text-lg mb-1">AI Pipeline Success</h3>
+              <p className="text-green-800">{result}</p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -85,7 +85,7 @@ export function DashboardPage() {
       <DashboardAnalysis />
 
       {/* Profile Summary */}
-      {profile.allergies.length > 0 && (
+      {(profile.allergies?.length || 0) > 0 && (
         <section className="bg-[var(--color-surface)] p-5 rounded-2xl border border-[var(--color-border)]">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-bold text-[var(--color-text)]">Your allergen watch list</h3>

@@ -1,15 +1,16 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useTrackerStore } from "../../features/tracker/tracker.store";
-import { Trash2, TrendingUp, Calendar, Loader } from "lucide-react";
+import { Trash2, Calendar, Plus, X } from "lucide-react";
 
 export function DailyTracker() {
-  const { logs, goals, removeLog, loadSupabaseData, loading } = useTrackerStore();
+  const { logs, goals, removeLog, addLog, loadSupabaseData } = useTrackerStore();
+  const [isAddingManual, setIsAddingManual] = useState(false);
+  const [manualForm, setManualForm] = useState({ name: "", calories: "", protein: "", carbs: "", fat: "" });
 
   useEffect(() => {
     loadSupabaseData();
   }, [loadSupabaseData]);
 
-  // Filter logs for today
   const today = new Date().toDateString();
   const todayLogs = logs.filter((l) => new Date(l.timestamp).toDateString() === today);
 
@@ -24,6 +25,22 @@ export function DailyTracker() {
   );
 
   const getPercent = (val: number, goal: number) => Math.min(100, Math.round((val / goal) * 100));
+
+  const handleManualSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!manualForm.name) return;
+    
+    await addLog({
+      name: manualForm.name,
+      calories: Number(manualForm.calories) || 0,
+      protein: Number(manualForm.protein) || 0,
+      carbs: Number(manualForm.carbs) || 0,
+      fat: Number(manualForm.fat) || 0,
+    });
+    
+    setIsAddingManual(false);
+    setManualForm({ name: "", calories: "", protein: "", carbs: "", fat: "" });
+  };
 
   return (
     <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 shadow-sm animate-fade-in">
@@ -63,7 +80,39 @@ export function DailyTracker() {
 
       {/* Log List */}
       <div>
-        <h4 className="font-bold text-[var(--color-text)] mb-3 text-sm uppercase tracking-wider text-[var(--color-muted)]">Logged Items</h4>
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="font-bold text-[var(--color-text)] text-sm uppercase tracking-wider text-[var(--color-muted)]">Logged Items</h4>
+          <button 
+            onClick={() => setIsAddingManual(!isAddingManual)}
+            className="text-xs font-bold flex items-center gap-1 text-[var(--color-primary)] hover:underline"
+          >
+            {isAddingManual ? <><X size={14}/> Cancel</> : <><Plus size={14}/> Add Manual</>}
+          </button>
+        </div>
+
+        {isAddingManual && (
+          <form onSubmit={handleManualSubmit} className="mb-4 p-4 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-xl animate-fade-in space-y-3">
+            <input 
+              type="text" required placeholder="Food Name" 
+              className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm"
+              value={manualForm.name} onChange={(e) => setManualForm({...manualForm, name: e.target.value})}
+            />
+            <div className="grid grid-cols-2 gap-2">
+              <input type="number" placeholder="Calories" className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm"
+                value={manualForm.calories} onChange={(e) => setManualForm({...manualForm, calories: e.target.value})} />
+              <input type="number" placeholder="Protein (g)" className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm"
+                value={manualForm.protein} onChange={(e) => setManualForm({...manualForm, protein: e.target.value})} />
+              <input type="number" placeholder="Carbs (g)" className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm"
+                value={manualForm.carbs} onChange={(e) => setManualForm({...manualForm, carbs: e.target.value})} />
+              <input type="number" placeholder="Fat (g)" className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm"
+                value={manualForm.fat} onChange={(e) => setManualForm({...manualForm, fat: e.target.value})} />
+            </div>
+            <button type="submit" className="w-full bg-[var(--color-primary)] text-white py-2 rounded-lg font-bold text-sm hover:opacity-90 transition-opacity">
+              Save Entry
+            </button>
+          </form>
+        )}
+
         {todayLogs.length === 0 ? (
           <p className="text-sm text-[var(--color-muted)] text-center py-4 bg-[var(--color-bg)] rounded-xl border border-dashed border-[var(--color-border)]">
             No items logged today. Scan a label or meal to add one!
@@ -71,7 +120,7 @@ export function DailyTracker() {
         ) : (
           <div className="space-y-3">
             {todayLogs.map((log) => (
-              <div key={log.id} className="flex items-center justify-between p-3 rounded-xl bg-[var(--color-bg)] border border-[var(--color-border)]">
+              <div key={log.id} className="flex items-center justify-between p-3 rounded-xl bg-[var(--color-bg)] border border-[var(--color-border)] animate-fade-in">
                 <div>
                   <p className="font-bold text-[var(--color-text)] text-sm">{log.name}</p>
                   <p className="text-xs text-[var(--color-muted)]">
