@@ -4,7 +4,7 @@ from typing import List
 
 class Settings(BaseSettings):
     environment: str = "development"
-    cors_origins: str = "http://localhost:5173"
+    cors_origins: str = "http://localhost:5173,https://safebiteai-ai.vercel.app"
     max_upload_size_mb: int = 10
     upload_directory: str = "uploads"
     ocr_api_key: str = "helloworld"
