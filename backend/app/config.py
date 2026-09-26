@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     upload_directory: str = "uploads"
     ocr_api_key: str = "helloworld"
     enable_label_region_detection: bool = False
-    ml_container_url: str = "http://localhost:8001/v1/ocr"
+    ml_container_url: str = ""
     ml_container_api_key: str = "local_ml_key"
     hugging_face_api_key: str = ""
     usda_api_key: str = ""
