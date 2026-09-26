@@ -2,7 +2,7 @@ import { useProfileStore } from "../features/profile/profile.store";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { User, LogOut } from "lucide-react";
-import { supabase } from "../../lib/supabase";
+import { supabase } from "../lib/supabase";
 
 const COMMON_ALLERGIES = ["Peanuts", "Tree Nuts", "Milk", "Eggs", "Wheat", "Soy", "Fish", "Shellfish", "Sesame"];
 const CONDITIONS = [
