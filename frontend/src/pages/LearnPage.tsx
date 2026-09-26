@@ -69,10 +69,15 @@ export function LearnPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCondition, setSelectedCondition] = useState<string | null>(null);
 
-  const filteredConditions = CONDITIONS.filter(c => 
-    c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredConditions = CONDITIONS.filter(c => {
+    const term = searchTerm.toLowerCase();
+    return (
+      c.name.toLowerCase().includes(term) ||
+      c.description.toLowerCase().includes(term) ||
+      c.foodsToAvoid.some(f => f.toLowerCase().includes(term)) ||
+      c.foodsToEat.some(f => f.toLowerCase().includes(term))
+    );
+  });
 
   return (
     <div className="space-y-8 animate-fade-in pb-12">
