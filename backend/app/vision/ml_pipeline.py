@@ -54,72 +54,44 @@ class VisionPipeline:
             self.ocr_model = PaddleOCR(use_angle_cls=True, lang='en', use_gpu=(self.device == 'cuda'))
         return self.ocr_model
 
-    def process_food_label(self, image_bytes: bytes) -> Dict[str, Any]:
+    async def process_food_label(self, image_bytes: bytes) -> Dict[str, Any]:
         """
-        Phase 1: Upgraded Scan Label Pipeline
-        1. Run YOLOv8 to detect ingredient_panel / nutrition_table
-        2. Crop regions
-        3. Run PaddleOCR on the cropped images
+        Phase 1: Upgraded Scan Label Pipeline using Hugging Face API for OCR
         """
         logger.info("Starting VisionPipeline processing for food label...")
         image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
         
-        if not HAS_ULTRALYTICS or not HAS_PADDLEOCR:
-            logger.info("Running in fallback/mock mode (missing ML dependencies).")
+        from app.config import settings
+        hf_token = settings.hugging_face_api_key
+        if not hf_token or hf_token == "your_hf_key_here":
+            logger.info("Running in fallback/mock mode (No Hugging Face token).")
             return self._mock_process(image)
 
-        yolo = self._load_yolo_label_model()
-        ocr = self._load_ocr_model()
-        
-        # 1. Detect regions using YOLO
-        # In a real fine-tuned model, classes might be 0: 'ingredient_panel', 1: 'nutrition_table'
-        results = yolo(image, verbose=False)
-        
-        detected_text = []
-        regions_found = []
-        
-        if len(results) > 0 and len(results[0].boxes) > 0:
-            boxes = results[0].boxes
-            for box in boxes:
-                x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
-                conf = float(box.conf[0])
-                cls = int(box.cls[0])
-                
-                # 2. Crop the detected regions
-                cropped_img = image.crop((x1, y1, x2, y2))
-                cropped_np = np.array(cropped_img)
-                
-                regions_found.append({
-                    "box": [x1, y1, x2, y2],
-                    "confidence": conf,
-                    "class": cls
-                })
-                
-                # 3. Run PaddleOCR specifically on the cropped region
-                ocr_result = ocr.ocr(cropped_np, cls=True)
-                
-                if ocr_result and ocr_result[0]:
-                    for line in ocr_result[0]:
-                        text = line[1][0]
-                        detected_text.append(text)
-        else:
-            # Fallback: if YOLO misses, run OCR on the whole image
-            logger.info("YOLO detected no specific panels. Running OCR on full image.")
-            ocr_result = ocr.ocr(np.array(image), cls=True)
-            if ocr_result and ocr_result[0]:
-                for line in ocr_result[0]:
-                    text = line[1][0]
-                    detected_text.append(text)
-
-        full_text = " ".join(detected_text)
-
-        return {
-            "status": "success",
-            "extracted_text": full_text,
-            "regions_detected": len(regions_found),
-            "region_details": regions_found,
-            "pipeline": "YOLOv8 + PaddleOCR"
-        }
+        try:
+            # Call Hugging Face API for OCR
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    "https://api-inference.huggingface.co/models/microsoft/trocr-base-printed",
+                    headers={"Authorization": f"Bearer {hf_token}"},
+                    content=image_bytes,
+                    timeout=15.0
+                )
+                response.raise_for_status()
+                result = response.json()
+            
+            # Extract text
+            text = result[0].get("generated_text", "") if isinstance(result, list) else result.get("generated_text", "")
+            
+            return {
+                "status": "success",
+                "extracted_text": text,
+                "regions_detected": 1,
+                "region_details": [],
+                "pipeline": "Hugging Face TrOCR"
+            }
+        except Exception as e:
+            logger.error(f"Error in OCR pipeline: {e}")
+            return self._mock_process(image)
 
     async def process_meal_image(self, image_bytes: bytes) -> Dict[str, Any]:
         """
@@ -130,7 +102,8 @@ class VisionPipeline:
         logger.info("Starting VisionPipeline processing for meal with HF + USDA...")
         image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
         
-        hf_token = os.getenv("HUGGING_FACE_API_KEY")
+        from app.config import settings
+        hf_token = settings.hugging_face_api_key
         if not hf_token or hf_token == "your_hf_key_here":
             logger.info("No Hugging Face token found. Running mock.")
             return self._mock_process_meal(image)

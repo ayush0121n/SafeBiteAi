@@ -1,5 +1,5 @@
-import { UploadCloud, Info, Image, X, Camera } from "lucide-react";
-import { useState, useCallback } from "react";
+import { UploadCloud, Info, Image as ImageIcon, X, Camera, RefreshCcw } from "lucide-react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useProfileStore } from "../features/profile/profile.store";
 import { createScan, createMealScan } from "../api/client";
@@ -15,6 +15,12 @@ export function NewScanPage() {
   const [dragActive, setDragActive] = useState(false);
   const [privacyMode, setPrivacyMode] = useState(false);
   const [scanMode, setScanMode] = useState<"label" | "meal">("label");
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const MAX_SIZE = 10 * 1024 * 1024;
   const ALLOWED = ["image/jpeg", "image/png", "image/webp"];
@@ -49,7 +55,58 @@ export function NewScanPage() {
     setFile(null);
     setPreview(null);
     setError(null);
+    stopCamera();
   };
+  
+  const startCamera = async () => {
+    setIsCameraActive(true);
+    setError(null);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: "environment" } 
+      });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (err: any) {
+      setError("Could not access camera. Please allow permissions or use file upload.");
+      setIsCameraActive(false);
+    }
+  };
+
+  const stopCamera = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+      videoRef.current.srcObject = null;
+    }
+    setIsCameraActive(false);
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const capturedFile = new File([blob], "camera-capture.jpg", { type: "image/jpeg" });
+            processFile(capturedFile);
+            stopCamera();
+          }
+        }, 'image/jpeg', 0.9);
+      }
+    }
+  };
+
+  // Cleanup camera on unmount
+  useEffect(() => {
+    return () => stopCamera();
+  }, []);
 
   const handleAnalyze = async () => {
     if (!file) return;
@@ -119,6 +176,8 @@ export function NewScanPage() {
               : "border-[var(--color-border)] hover:border-[var(--color-primary)]"
           }`}
         >
+          
+          {/* Upload Zone Buttons */}
           <UploadCloud size={56} className="mx-auto text-[var(--color-primary)] mb-4" />
           <p className="text-[var(--color-text)] font-bold text-xl mb-2">
             Drop your label photo here
@@ -126,21 +185,33 @@ export function NewScanPage() {
           <p className="text-[var(--color-muted)] mb-6">or</p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <input
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={handleFileChange}
-              className="hidden"
-              id="label-camera"
-            />
-            <label
-              htmlFor="label-camera"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 gradient-primary text-white font-bold py-3 px-6 rounded-xl cursor-pointer shadow-md hover:shadow-lg transition-all"
-            >
-              <Camera size={20} />
-              Take Photo
-            </label>
+            {isMobile ? (
+              <>
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={handleFileChange}
+                  className="hidden"
+                  id="mobile-camera-upload"
+                />
+                <label
+                  htmlFor="mobile-camera-upload"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 gradient-primary text-white font-bold py-3 px-6 rounded-xl cursor-pointer shadow-md hover:shadow-lg transition-all"
+                >
+                  <Camera size={20} />
+                  Take Photo
+                </label>
+              </>
+            ) : (
+              <button
+                onClick={startCamera}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 gradient-primary text-white font-bold py-3 px-6 rounded-xl cursor-pointer shadow-md hover:shadow-lg transition-all"
+              >
+                <Camera size={20} />
+                Use Camera
+              </button>
+            )}
 
             <input
               type="file"
@@ -153,7 +224,7 @@ export function NewScanPage() {
               htmlFor="label-upload"
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[var(--color-bg)] text-[var(--color-text)] font-bold py-3 px-6 rounded-xl border-2 border-[var(--color-border)] cursor-pointer hover:border-[var(--color-primary)] transition-colors"
             >
-              <Image size={20} />
+              <ImageIcon size={20} />
               Upload File
             </label>
           </div>
@@ -238,6 +309,30 @@ export function NewScanPage() {
           </ul>
         </div>
       </div>
+
+      {/* Camera Modal */}
+      {isCameraActive && !isMobile && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in p-4">
+          <div className="bg-[var(--color-surface)] p-4 rounded-3xl w-full max-w-3xl flex flex-col gap-4 shadow-2xl relative border border-[var(--color-border)]">
+            <button onClick={stopCamera} className="absolute top-6 right-6 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 z-10 transition">
+              <X size={24} />
+            </button>
+            <div className="relative w-full rounded-2xl overflow-hidden bg-black aspect-video flex items-center justify-center border border-[var(--color-border)]">
+              <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
+              <canvas ref={canvasRef} className="hidden" />
+            </div>
+            <div className="flex justify-center mt-2">
+              <button
+                onClick={capturePhoto}
+                className="inline-flex items-center gap-2 gradient-primary text-white font-bold py-4 px-10 rounded-full cursor-pointer shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95 text-lg"
+              >
+                <Camera size={24} />
+                Capture Photo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

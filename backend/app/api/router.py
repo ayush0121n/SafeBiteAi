@@ -88,9 +88,8 @@ async def create_scan(
             ocr_text = "Error reading label. Connection to ML service failed."
             ocr_confidence = 0.30
     else:
-        # Use the local vision pipeline (YOLOv8 + OCR)
-        # Note: In Render free tier, this will run in mock mode
-        vision_results = vision_pipeline.process_food_label(content)
+        # Use the local vision pipeline (HF OCR or mock)
+        vision_results = await vision_pipeline.process_food_label(content)
         ocr_text = vision_results.get("extracted_text", "")
         ocr_confidence = 0.92
 

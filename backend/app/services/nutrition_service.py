@@ -1,11 +1,11 @@
-import os
 import httpx
 import logging
 from typing import Dict, Any, Optional
+from app.config import settings
 
 logger = logging.getLogger(__name__)
 
-USDA_API_KEY = os.getenv("USDA_API_KEY", "")
+USDA_API_KEY = settings.usda_api_key
 USDA_BASE_URL = "https://api.nal.usda.gov/fdc/v1"
 
 async def fetch_nutrition_for_food(food_name: str) -> Optional[Dict[str, Any]]:
