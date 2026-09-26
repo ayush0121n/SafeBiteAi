@@ -1,23 +1,19 @@
 import { ShieldAlert, Info, AlertTriangle } from "lucide-react";
 import { useProfileStore } from "../features/profile/profile.store";
 
-// Common aliases for major allergens to show offline
 const allergenAliases: Record<string, string[]> = {
-  peanut: ["Arachis oil", "Groundnuts", "Mandelonas", "Nu-Nuts", "Goober peas"],
-  tree_nut: ["Almond", "Brazil nut", "Cashew", "Chestnut", "Filbert", "Hazelnut", "Macadamia", "Pecan", "Pine nut", "Pistachio", "Walnut", "Marzipan", "Praline"],
-  milk: ["Butter", "Casein", "Cheese", "Cream", "Curds", "Ghee", "Lactose", "Paneer", "Whey", "Yogurt"],
-  egg: ["Albumin", "Globulin", "Lecithin", "Lysozyme", "Mayonnaise", "Meringue", "Ovalbumin", "Surimi"],
-  soy: ["Edamame", "Miso", "Natto", "Shoyu", "Soy sauce", "Tamari", "Tempeh", "Tofu"],
-  wheat: ["Bran", "Bread crumbs", "Bulgur", "Couscous", "Durum", "Einkorn", "Emmer", "Farina", "Kamut", "Seitan", "Semolina", "Spelt"],
-  fish: ["Anchovies", "Bass", "Catfish", "Cod", "Flounder", "Grouper", "Haddock", "Hake", "Halibut", "Herring", "Mahi mahi", "Pike", "Pollock", "Salmon", "Snapper", "Sole", "Swordfish", "Tilapia", "Trout", "Tuna"],
-  shellfish: ["Barnacle", "Crab", "Crawfish", "Krill", "Lobster", "Prawns", "Shrimp", "Clams", "Mussels", "Oysters", "Scallops", "Squid", "Octopus"],
-  sesame: ["Benne", "Gingelly", "Halvah", "Sesamol", "Tahini"]
-};
-
-const displayNames: Record<string, string> = {
-  peanut: "Peanut", tree_nut: "Tree Nuts", milk: "Milk/Dairy",
-  egg: "Egg", soy: "Soy", wheat: "Wheat/Gluten",
-  fish: "Fish", shellfish: "Shellfish", sesame: "Sesame"
+  "Peanuts": ["Arachis oil", "Groundnuts", "Mandelonas", "Nu-Nuts", "Goober peas", "Monkey nuts"],
+  "Tree Nuts": ["Almond", "Brazil nut", "Cashew", "Chestnut", "Filbert", "Hazelnut", "Macadamia", "Pecan", "Pine nut", "Pistachio", "Walnut", "Marzipan", "Praline"],
+  "Milk": ["Butter", "Casein", "Cheese", "Cream", "Curds", "Ghee", "Lactose", "Paneer", "Whey", "Yogurt", "Lactalbumin"],
+  "Eggs": ["Albumin", "Globulin", "Lecithin", "Lysozyme", "Mayonnaise", "Meringue", "Ovalbumin", "Surimi"],
+  "Soy": ["Edamame", "Miso", "Natto", "Shoyu", "Soy sauce", "Tamari", "Tempeh", "Tofu", "Soya"],
+  "Wheat": ["Bran", "Bread crumbs", "Bulgur", "Couscous", "Durum", "Einkorn", "Emmer", "Farina", "Kamut", "Seitan", "Semolina", "Spelt"],
+  "Fish": ["Anchovies", "Bass", "Catfish", "Cod", "Flounder", "Grouper", "Haddock", "Hake", "Halibut", "Herring", "Mahi mahi", "Pike", "Pollock", "Salmon", "Snapper", "Sole", "Swordfish", "Tilapia", "Trout", "Tuna"],
+  "Shellfish": ["Barnacle", "Crab", "Crawfish", "Krill", "Lobster", "Prawns", "Shrimp", "Clams", "Mussels", "Oysters", "Scallops", "Squid", "Octopus"],
+  "Sesame": ["Benne", "Gingelly", "Halvah", "Sesamol", "Tahini", "Til"],
+  "Mollusks": ["Abalone", "Clam", "Cockle", "Cuttlefish", "Mussel", "Octopus", "Oyster", "Scallop", "Snail", "Squid"],
+  "Lupin": ["Lupine", "Lupin flour", "Lupin seed", "Lupin bean"],
+  "Mustard": ["Mustard powder", "Mustard seed", "Mustard leaves"]
 };
 
 export function OfflineCheckPage() {
@@ -54,7 +50,7 @@ export function OfflineCheckPage() {
           {userAllergies.map(allergy => (
             <div key={allergy} className="bg-[var(--color-surface)] p-5 rounded-2xl border border-[var(--color-border)]">
               <h3 className="text-xl font-bold text-[var(--color-text)] mb-3 border-b border-[var(--color-border)] pb-2">
-                {displayNames[allergy] || allergy}
+                {allergy}
               </h3>
               <div>
                 <p className="text-sm font-bold text-[var(--color-muted)] mb-2 uppercase tracking-wider">Common Hidden Names:</p>
