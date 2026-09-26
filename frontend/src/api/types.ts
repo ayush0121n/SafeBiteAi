@@ -9,6 +9,9 @@ export interface UserProfile {
   name?: string;
   ageGroup?: "child" | "teen" | "adult" | "senior";
   allergies: string[];
+  allergySeverity?: Record<string, "mild" | "moderate" | "severe" | "anaphylactic">;
+  medications?: string[];
+  dietGoals?: string[];
   conditions: Array<
     "diabetes" | "hypertension" | "heart_health" | "celiac" | "kidney_health"
   >;
