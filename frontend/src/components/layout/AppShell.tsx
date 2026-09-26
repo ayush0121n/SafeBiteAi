@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
-import { Camera, LayoutDashboard, History, User, ShieldCheck, Sun, Moon, Type, Sparkles } from "lucide-react";
+import { Camera, LayoutDashboard, History, User, ShieldCheck, Sun, Moon, Type, Sparkles, Search } from "lucide-react";
 import { useAccessibilityStore } from "../../features/accessibility/accessibility.store";
 import { useEffect } from "react";
 import { supabase } from "../../lib/supabase";
@@ -31,6 +31,7 @@ export function AppShell() {
 
   const navItems = [
     { name: "Dashboard", path: "/app", icon: LayoutDashboard },
+    { name: "Search", path: "/app/search", icon: Search },
     { name: "Scan", path: "/app/scan", icon: Camera },
     { name: "History", path: "/app/history", icon: History },
     { name: "Features", path: "/app/features", icon: Sparkles },

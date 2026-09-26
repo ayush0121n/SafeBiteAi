@@ -15,6 +15,8 @@ import { LoginPage } from "../pages/LoginPage";
 import { SignupPage } from "../pages/SignupPage";
 import { FeaturesHubPage } from "../pages/FeaturesHubPage";
 import { FeatureDetailsPage } from "../pages/FeatureDetailsPage";
+import { SearchPage } from "../pages/SearchPage";
+import { ProductDetailPage } from "../pages/ProductDetailPage";
 import { AppShell } from "../components/layout/AppShell";
 import { GlobalErrorBoundary } from "../components/layout/GlobalErrorBoundary";
 
@@ -49,6 +51,8 @@ export const router = createBrowserRouter([
     errorElement: <GlobalErrorBoundary />,
     children: [
       { path: "/app", element: <DashboardPage /> },
+      { path: "/app/search", element: <SearchPage /> },
+      { path: "/app/product/:productId", element: <ProductDetailPage /> },
       { path: "/app/scan", element: <NewScanPage /> },
       { path: "/app/scan/:scanId/processing", element: <ScanProcessingPage /> },
       { path: "/app/scan/:scanId", element: <ScanResultsPage /> },
