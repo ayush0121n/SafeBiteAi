@@ -11,6 +11,7 @@ interface OFFProduct {
 
 export function SearchPage() {
   const [query, setQuery] = useState("");
+  const [region, setRegion] = useState<"in" | "world">("in");
   const [isSearching, setIsSearching] = useState(false);
   const [results, setResults] = useState<OFFProduct[]>([]);
   const [error, setError] = useState("");
@@ -25,7 +26,7 @@ export function SearchPage() {
     setHasSearched(true);
     
     try {
-      const res = await fetch(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1`);
+      const res = await fetch(`https://${region}.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1`);
       const data = await res.json();
       if (data.products && Array.isArray(data.products)) {
         setResults(data.products.slice(0, 10)); // limit to 10
@@ -48,24 +49,30 @@ export function SearchPage() {
         </p>
       </div>
 
-      <form onSubmit={handleSearch} className="relative mb-10">
-        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-          <Search className="h-6 w-6 text-[var(--color-muted)]" />
+      <form onSubmit={handleSearch} className="mb-10 flex flex-col gap-3">
+        <div className="flex gap-2 mb-2">
+          <button type="button" onClick={() => setRegion("in")} className={`flex-1 py-2 rounded-xl font-bold border-2 transition-colors ${region === "in" ? "bg-[var(--color-bg)] border-[var(--color-primary)] text-[var(--color-text)]" : "border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-primary)]"}`}>🇮🇳 Indian Database</button>
+          <button type="button" onClick={() => setRegion("world")} className={`flex-1 py-2 rounded-xl font-bold border-2 transition-colors ${region === "world" ? "bg-[var(--color-bg)] border-[var(--color-primary)] text-[var(--color-text)]" : "border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-primary)]"}`}>🌍 Global Database</button>
         </div>
-        <input
-          type="text"
-          className="block w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-[var(--color-border)] bg-[var(--color-surface)] text-lg shadow-sm focus:border-[var(--color-primary)] focus:ring-0 transition-colors"
-          placeholder="Search by food name, brand, or barcode..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-        <button
-          type="submit"
-          disabled={isSearching}
-          className="absolute inset-y-2 right-2 px-6 bg-[var(--color-primary)] hover:opacity-90 disabled:opacity-50 text-white font-bold rounded-xl transition-opacity flex items-center"
-        >
-          {isSearching ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : "Search"}
-        </button>
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <Search className="h-6 w-6 text-[var(--color-muted)]" />
+          </div>
+          <input
+            type="text"
+            className="block w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-[var(--color-border)] bg-[var(--color-surface)] text-lg shadow-sm focus:border-[var(--color-primary)] focus:ring-0 transition-colors"
+            placeholder="Search by food name, brand, or barcode..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          <button
+            type="submit"
+            disabled={isSearching}
+            className="absolute inset-y-2 right-2 px-6 bg-[var(--color-primary)] hover:opacity-90 disabled:opacity-50 text-white font-bold rounded-xl transition-opacity flex items-center"
+          >
+            {isSearching ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : "Search"}
+          </button>
+        </div>
       </form>
 
       {error && (
