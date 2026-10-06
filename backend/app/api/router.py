@@ -93,10 +93,11 @@ async def create_scan(
     detected_regions = []   # Only populated when real detection runs
     pipeline_used = "none"
 
+    ml_container_success = False
     if settings.ml_container_url:
         import httpx
         try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
+            async with httpx.AsyncClient(timeout=3.0) as client:
                 response = await client.post(
                     settings.ml_container_url,
                     headers={"Authorization": f"Bearer {settings.ml_container_api_key}"},
@@ -107,11 +108,13 @@ async def create_scan(
                     ocr_text = data.get("text", "")
                     ocr_confidence = data.get("confidence", 0.85)
                     pipeline_used = "ml_container"
+                    ml_container_success = True
                 else:
                     print(f"ML API Error: {response.status_code} {response.text}")
         except Exception as e:
             print(f"ML Request failed: {e}")
-    else:
+            
+    if not ml_container_success:
         vision_results = await vision_pipeline.process_food_label(content)
         ocr_text = vision_results.get("extracted_text", "")
         pipeline_used = vision_results.get("pipeline", "local")
@@ -135,7 +138,7 @@ async def create_scan(
     raw_name = file.filename.rsplit(".", 1)[0].replace("-", " ").replace("_", " ") if file.filename else "Food Label"
     # Remove digits and common test suffixes so OFF can actually find it
     raw_name = re.sub(r'\d+', '', raw_name)
-    raw_name = re.sub(r'(?i)\b(label|test|image|scan|capture)\b', '', raw_name)
+    raw_name = re.sub(r'(?i)\b(label|test|image|scan|capture|camera|photo)\b', '', raw_name)
     product_name = raw_name.strip().title() or "Food Label"
 
     real_ingredients = ""
