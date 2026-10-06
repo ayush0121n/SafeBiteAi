@@ -10,6 +10,8 @@ import { useProfileStore } from "../features/profile/profile.store";
 import { API_URL } from "../api/client";
 import type { ScanResult, ScanStatus, ConcernLevel } from "../api/types";
 
+import { AnimatedBackground } from "../components/ui/AnimatedBackground";
+
 const statusConfig: Record<ScanStatus, { label: string; color: string; bg: string; Icon: typeof ShieldCheck; description: string }> = {
   safe: { label: "Looks Suitable", color: "text-[var(--color-safe)]", bg: "bg-[var(--color-safe-bg)]", Icon: ShieldCheck, description: "No configured concerns found in the readable label." },
   caution: { label: "Review Before Eating", color: "text-[var(--color-caution)]", bg: "bg-[var(--color-caution-bg)]", Icon: ShieldAlert, description: "Some ingredients or nutrition values may need your attention." },
@@ -119,11 +121,28 @@ export function ScanResultsPage() {
   };
 
   return (
-    <div className="space-y-5 pb-8 animate-fade-in">
-      {/* Back link */}
-      <Link to="/app" className="inline-flex items-center gap-1 text-[var(--color-muted)] hover:text-[var(--color-text)] font-bold text-sm">
-        <ArrowLeft size={16} /> Back to dashboard
-      </Link>
+    <div className="space-y-5 pb-8 animate-fade-in relative z-0">
+      <AnimatedBackground intensity={0.6} />
+
+      {/* Back link and controls */}
+      <div className="flex items-center justify-between mb-2">
+        <Link to="/app" className="inline-flex items-center gap-1 text-[var(--color-primary)] hover:opacity-80 font-bold text-sm transition-opacity">
+          <ArrowLeft size={16} /> Back to dashboard
+        </Link>
+        <div className="flex gap-2">
+          {(!("speechSynthesis" in window) || profile.accessibility?.kidsElderlyMode) ? null : (
+            <button onClick={handleVoiceRead} className="flex items-center gap-2 bg-[var(--color-surface)]/80 hover:bg-[var(--color-bg)] text-[var(--color-text)] px-3 py-1.5 rounded-lg font-bold border border-[var(--color-border)] shadow-sm backdrop-blur-md transition-colors text-sm">
+              <Volume2 size={16} />
+              Read
+            </button>
+          )}
+          {!!navigator.share && (
+            <button onClick={handleShare} className="flex items-center gap-2 bg-[var(--color-surface)]/80 hover:bg-[var(--color-bg)] text-[var(--color-text)] px-3 py-1.5 rounded-lg font-bold border border-[var(--color-border)] shadow-sm backdrop-blur-md transition-colors text-sm">
+              <Share2 size={16} />
+            </button>
+          )}
+        </div>
+      </div>
 
       {/* Not-a-food-label warning */}
       {result.status === "uncertain" && !result.extractedText?.ingredientsRaw && (
@@ -148,7 +167,8 @@ export function ScanResultsPage() {
       )}
 
       {/* Overall Status */}
-      <section className={`${cfg.bg} rounded-2xl p-8 text-center animate-slide-up shadow-sm transform-style-3d hover:scale-[1.01] transition-transform duration-300`}>
+      <section className={`${cfg.bg} rounded-3xl p-8 text-center animate-slide-up shadow-xl backdrop-blur-xl border-t border-white/20 transform-style-3d hover:scale-[1.02] transition-transform duration-300 relative overflow-hidden`}>
+        <div className="absolute inset-0 bg-gradient-to-b from-white/30 to-transparent dark:from-white/10 opacity-50 pointer-events-none"></div>
         <div className="transform-translate-z-20">
           <cfg.Icon size={60} className={`mx-auto mb-3 ${cfg.color} animate-pulse-gentle`} />
         </div>
@@ -161,7 +181,7 @@ export function ScanResultsPage() {
 
       {/* Label Confidence Map */}
       {result.imageUrl && result.detectedRegions && result.detectedRegions.length > 0 && (
-        <section className="bg-[var(--color-surface)] rounded-2xl p-5 border border-[var(--color-border)] animate-slide-up">
+        <section className="mt-6 bg-[var(--color-surface)]/80 backdrop-blur-md rounded-3xl p-6 border border-[var(--color-border)] animate-slide-up shadow-lg">
           <h3 className="text-xl font-bold text-[var(--color-text)] mb-2">What SafeBite Read</h3>
           <p className="text-[var(--color-muted)] text-sm mb-4">
             We read {Math.round(result.confidence.ocr * 100)}% of this label clearly.
@@ -209,18 +229,18 @@ export function ScanResultsPage() {
 
       {/* Allergen Alerts (Evidence Cards) */}
       {result.allergens.length > 0 && (
-        <section className="space-y-3 animate-slide-up" style={{ animationDelay: "0.1s" }}>
+        <section className="mt-8 space-y-4 animate-slide-up" style={{ animationDelay: "0.1s" }}>
           <h3 className="text-xl font-bold text-[var(--color-text)]">⚠️ Allergen Evidence</h3>
           {result.allergens.map((a, i) => {
             const isCritical = a.severity === "critical";
             const isPossible = a.matchType === "may_contain";
             const confidence = result.confidence.ingredients > 0.8 ? "High" : result.confidence.ingredients > 0.5 ? "Medium" : "Low";
             return (
-              <div key={i} className={`p-5 rounded-xl border-2 ${
-                isCritical ? "border-[var(--color-avoid)] bg-[var(--color-avoid-bg)]"
-                : isPossible ? "border-[var(--color-caution)] bg-[var(--color-caution-bg)]"
-                : "border-[var(--color-border)] bg-[var(--color-surface)]"
-              }`}>
+              <div key={i} className={`p-6 rounded-2xl border ${
+                isCritical ? "border-[var(--color-avoid)]/50 bg-[var(--color-avoid-bg)]/80"
+                : isPossible ? "border-[var(--color-caution)]/50 bg-[var(--color-caution-bg)]/80"
+                : "border-[var(--color-border)] bg-[var(--color-surface)]/80"
+              } backdrop-blur-md shadow-md hover:shadow-lg transition-shadow`}>
                 <div className="flex items-center justify-between mb-3 border-b pb-3 border-black/10 dark:border-white/10">
                   <div className="flex items-center gap-2">
                     <AlertTriangle size={20} className={isCritical ? "text-[var(--color-avoid)]" : "text-[var(--color-caution)]"} />
@@ -258,7 +278,7 @@ export function ScanResultsPage() {
         <section className="space-y-3 animate-slide-up" style={{ animationDelay: "0.15s" }}>
           <h3 className="text-xl font-bold text-[var(--color-text)]">What this means for you</h3>
           {result.concerns.map((c, i) => (
-            <div key={i} className="bg-[var(--color-surface)] rounded-xl p-4 border border-[var(--color-border)]">
+            <div key={i} className="bg-[var(--color-surface)]/80 backdrop-blur-md rounded-2xl p-5 border border-[var(--color-border)] shadow-md">
               <div className="flex items-center justify-between mb-2">
                 <span className="font-bold text-[var(--color-text)] text-lg">{c.title}</span>
                 <span className={`text-xs font-bold px-3 py-1 rounded-full text-white ${concernColors[c.level]}`}>
@@ -276,12 +296,12 @@ export function ScanResultsPage() {
 
       {/* Nutrition */}
       {result.nutrition.calories !== undefined && (
-        <section className="bg-[var(--color-surface)] rounded-xl p-5 border border-[var(--color-border)] animate-slide-up" style={{ animationDelay: "0.2s" }}>
+        <section className="bg-[var(--color-surface)]/80 backdrop-blur-md rounded-3xl p-6 border border-[var(--color-border)] animate-slide-up shadow-lg" style={{ animationDelay: "0.2s" }}>
           <h3 className="text-xl font-bold text-[var(--color-text)] mb-3">Nutrition Summary</h3>
           {result.nutrition.servingSize && (
             <p className="text-sm text-[var(--color-muted)] mb-3">Per serving: {result.nutrition.servingSize}</p>
           )}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {[
               { label: "Calories", value: result.nutrition.calories },
               { label: "Added Sugar", value: `${result.nutrition.addedSugarG ?? "—"}g` },
@@ -290,9 +310,9 @@ export function ScanResultsPage() {
               { label: "Fiber", value: `${result.nutrition.fiberG ?? "—"}g` },
               { label: "Protein", value: `${result.nutrition.proteinG ?? "—"}g` },
             ].map((item) => (
-              <div key={item.label} className="bg-[var(--color-bg)] rounded-lg p-3">
-                <p className="text-sm text-[var(--color-muted)]">{item.label}</p>
-                <p className="text-lg font-bold text-[var(--color-text)]">{item.value}</p>
+              <div key={item.label} className="bg-black/5 dark:bg-white/5 rounded-xl p-4 backdrop-blur-sm border border-black/5 dark:border-white/5">
+                <p className="text-sm text-[var(--color-muted)] font-bold">{item.label}</p>
+                <p className="text-xl font-extrabold text-[var(--color-text)] mt-1">{item.value}</p>
               </div>
             ))}
           </div>
@@ -304,30 +324,30 @@ export function ScanResultsPage() {
         <section className="space-y-3 animate-slide-up" style={{ animationDelay: "0.25s" }}>
           <div className="flex items-center gap-2 mb-1">
             <h3 className="text-xl font-bold text-blue-700 dark:text-blue-400">💡 Safer Alternatives</h3>
-            <span className="text-xs font-bold text-[var(--color-muted)] border border-[var(--color-border)] px-2 py-0.5 rounded-full">Open Food Facts</span>
+            <span className="text-xs font-bold text-blue-600/70 border border-blue-200 px-2 py-0.5 rounded-full bg-blue-50/50 backdrop-blur-sm">Open Food Facts</span>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             {result.alternatives.map((alt) => (
-              <div key={alt.id} className="bg-[var(--color-surface)] rounded-xl p-5 border-2 border-blue-100 dark:border-blue-900 shadow-sm flex flex-col justify-between h-full">
+              <div key={alt.id} className="bg-blue-500/5 backdrop-blur-md rounded-2xl p-5 border border-blue-500/20 shadow-md flex flex-col justify-between h-full hover:bg-blue-500/10 transition-colors">
                 <div>
                   <h4 className="font-bold text-lg text-[var(--color-text)] leading-tight mb-1">{alt.productName}</h4>
                   <p className="text-sm font-semibold text-[var(--color-muted)] mb-3">{alt.brand}</p>
                   
-                  <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg mb-3">
-                    <p className="text-sm text-blue-800 dark:text-blue-300 font-medium">
+                  <div className="bg-blue-50/50 dark:bg-blue-900/20 p-3 rounded-xl mb-3 border border-blue-100/50 dark:border-blue-800/30">
+                    <p className="text-sm text-blue-800 dark:text-blue-300 font-bold">
                       ✓ {alt.reason}
                     </p>
                   </div>
-                  <p className="text-xs text-[var(--color-muted)] mb-4 font-medium uppercase tracking-wide">
+                  <p className="text-xs text-[var(--color-muted)] mb-4 font-bold uppercase tracking-wide">
                     {alt.highlights}
                   </p>
                 </div>
                 <div className="flex gap-2">
                   <a href={alt.url} target="_blank" rel="noopener noreferrer" 
-                    className="flex-1 text-center py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg text-sm font-bold text-[var(--color-text)] hover:bg-[var(--color-surface)] transition-colors">
+                    className="flex-1 text-center py-2 bg-white/50 dark:bg-black/20 border border-blue-200/50 rounded-xl text-sm font-bold text-[var(--color-text)] hover:bg-white/80 transition-colors backdrop-blur-sm">
                     View
                   </a>
-                  <button className="flex-1 flex items-center justify-center gap-1 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors">
+                  <button className="flex-1 flex items-center justify-center gap-1 py-2 bg-blue-600/90 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors shadow-sm">
                     <Save size={16} /> Save
                   </button>
                 </div>
@@ -338,25 +358,27 @@ export function ScanResultsPage() {
       )}
 
       {/* Extracted Ingredients */}
-      <section className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] overflow-hidden">
-        <button onClick={() => setShowIngredients(!showIngredients)} className="w-full flex items-center justify-between p-5 text-left">
+      <section className="bg-[var(--color-surface)]/80 backdrop-blur-md rounded-2xl border border-[var(--color-border)] overflow-hidden shadow-sm">
+        <button onClick={() => setShowIngredients(!showIngredients)} className="w-full flex items-center justify-between p-5 text-left hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
           <h3 className="text-xl font-bold text-[var(--color-text)]">Extracted Ingredients</h3>
           {showIngredients ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
         </button>
         {showIngredients && (
-          <div className="px-5 pb-5 border-t border-[var(--color-border)] pt-3">
-            <p className="text-[var(--color-muted)] text-sm leading-relaxed whitespace-pre-wrap">
+          <div className="px-5 pb-5 border-t border-[var(--color-border)] pt-4 bg-black/5 dark:bg-white/5">
+            <p className="text-[var(--color-text)] opacity-90 text-sm leading-relaxed whitespace-pre-wrap font-medium">
               {result.extractedText.ingredientsRaw}
             </p>
             {result.extractedText.allergyStatement && (
-              <p className="mt-3 font-bold text-[var(--color-avoid)] text-sm">{result.extractedText.allergyStatement}</p>
+              <div className="mt-4 p-3 bg-[var(--color-avoid-bg)]/50 border border-[var(--color-avoid)]/30 rounded-xl">
+                <p className="font-bold text-[var(--color-avoid)] text-sm">{result.extractedText.allergyStatement}</p>
+              </div>
             )}
           </div>
         )}
       </section>
 
       {/* Confidence */}
-      <section className="bg-[var(--color-uncertain-bg)] rounded-xl p-4 flex items-start gap-3">
+      <section className="bg-[var(--color-uncertain-bg)]/80 backdrop-blur-md border border-[var(--color-uncertain)]/30 rounded-2xl p-4 flex items-start gap-3 shadow-sm">
         <HelpCircle size={20} className="text-[var(--color-uncertain)] mt-0.5 flex-shrink-0" />
         <div>
           <p className="font-bold text-[var(--color-text)] text-sm">Read confidence</p>
