@@ -56,11 +56,55 @@ class VisionPipeline:
 
     async def process_food_label(self, image_bytes: bytes) -> Dict[str, Any]:
         """
-        Phase 1: Upgraded Scan Label Pipeline using Hugging Face API for OCR
+        Phase 1: Upgraded Scan Label Pipeline using YOLO and PaddleOCR natively if available.
         """
         logger.info("Starting VisionPipeline processing for food label...")
         image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
         
+        yolo_model = self._load_yolo_label_model()
+        ocr_model = self._load_ocr_model()
+
+        if yolo_model and ocr_model:
+            try:
+                img_np = np.array(image)
+                results = yolo_model(img_np)
+                
+                regions_details = []
+                extracted_text = ""
+                
+                for r in results:
+                    boxes = r.boxes
+                    for box in boxes:
+                        b = box.xyxy[0].tolist()
+                        conf = box.conf[0].item()
+                        cls = int(box.cls[0].item())
+                        
+                        regions_details.append({
+                            "box": b,
+                            "confidence": conf,
+                            "class": cls
+                        })
+                
+                ocr_results = ocr_model.ocr(img_np, cls=True)
+                if ocr_results and ocr_results[0]:
+                    for line in ocr_results[0]:
+                        if line and len(line) > 1 and line[1]:
+                            extracted_text += line[1][0] + " "
+                            
+                import re
+                extracted_text = re.sub(r'\s+', ' ', extracted_text).strip()
+                
+                return {
+                    "status": "success",
+                    "extracted_text": extracted_text,
+                    "regions_detected": len(regions_details),
+                    "region_details": regions_details,
+                    "pipeline": "YOLOv8 + PaddleOCR"
+                }
+            except Exception as e:
+                logger.error(f"Error in YOLO/OCR pipeline: {e}")
+                # fallback below
+
         from app.config import settings
         hf_token = settings.hugging_face_api_key
         if not hf_token or hf_token == "your_hf_key_here":
@@ -95,13 +139,74 @@ class VisionPipeline:
 
     async def process_meal_image(self, image_bytes: bytes) -> Dict[str, Any]:
         """
-        Phase 2: Scan Meal Pipeline using REAL APIs
-        1. Call Hugging Face API for ViT classification
-        2. Query USDA FoodData Central for actual nutrition
+        Phase 2: Scan Meal Pipeline using YOLO and USDA APIs
         """
-        logger.info("Starting VisionPipeline processing for meal with HF + USDA...")
+        logger.info("Starting VisionPipeline processing for meal...")
         image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
         
+        yolo_model = self._load_yolo_label_model()
+
+        if yolo_model:
+            try:
+                img_np = np.array(image)
+                results = yolo_model(img_np)
+                
+                foods_list = []
+                total_nut = {"calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0}
+                names = yolo_model.names
+                
+                tasks = []
+                detected_items = []
+                
+                for r in results:
+                    boxes = r.boxes
+                    for box in boxes:
+                        b = box.xyxy[0].tolist()
+                        conf = box.conf[0].item()
+                        cls = int(box.cls[0].item())
+                        label = names[cls] if cls in names else "Food Item"
+                        
+                        # COCO dataset food classes: 46-55 (banana, apple, sandwich, orange, broccoli, carrot, hot dog, pizza, donut, cake)
+                        # We only want to process food items
+                        food_classes = {46, 47, 48, 49, 50, 51, 52, 53, 54, 55}
+                        if cls in food_classes and conf > 0.1:
+                            detected_items.append({"label": label.title(), "score": conf, "box": b})
+                
+                if detected_items:
+                    from app.services.nutrition_service import fetch_nutrition_for_food
+                    for item in detected_items:
+                        tasks.append(fetch_nutrition_for_food(item["label"]))
+                    
+                    nutrition_results = await asyncio.gather(*tasks)
+                    
+                    for item, nut in zip(detected_items, nutrition_results):
+                        if not nut:
+                            nut = {
+                                "calories": 100, "protein_g": 5, "carbs_g": 10, "fat_g": 2, "serving_g": 100
+                            }
+                        
+                        foods_list.append({
+                            "name": item["label"],
+                            "confidence": round(item["score"], 2),
+                            "box": item["box"],
+                            "nutrition": nut
+                        })
+                        
+                        total_nut["calories"] += nut["calories"]
+                        total_nut["protein_g"] += nut["protein_g"]
+                        total_nut["carbs_g"] += nut["carbs_g"]
+                        total_nut["fat_g"] += nut["fat_g"]
+                        
+                    return {
+                        "status": "success",
+                        "foods": foods_list,
+                        "total_nutrition": total_nut,
+                        "pipeline": "YOLOv8 + USDA API"
+                    }
+            except Exception as e:
+                logger.error(f"Error in YOLO meal pipeline: {e}")
+                # fallback below
+
         from app.config import settings
         hf_token = settings.hugging_face_api_key
         if not hf_token or hf_token == "your_hf_key_here":

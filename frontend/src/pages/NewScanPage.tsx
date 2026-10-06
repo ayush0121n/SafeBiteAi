@@ -87,6 +87,10 @@ export function NewScanPage() {
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
+      if (video.videoWidth === 0 || video.videoHeight === 0) {
+        setError("Camera not fully loaded yet. Please try again.");
+        return;
+      }
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       const ctx = canvas.getContext('2d');

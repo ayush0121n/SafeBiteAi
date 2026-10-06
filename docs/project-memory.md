@@ -40,6 +40,9 @@
 - [2026-09-25] Added Admin Portal with login and dashboard to manage feature flags and monitor mock analytics
 - [2026-09-25] Revamped application shell and admin portal for full desktop and mobile responsiveness (sidebars on desktop, bottom/top navs on mobile)
 - [2026-09-25] Finalized deployment configurations (render.yaml, vercel.json, deployment.md) and exposed necessary environment variables for production
+- [2026-10-06] Upgraded ML pipeline to natively support YOLOv8 and PaddleOCR with class filtering for accurate predictions
+- [2026-10-06] Fixed camera capture dimensions bug on the NewScanPage
+- [2026-10-06] Enhanced main AppShell layout with subtle animated background patterns
 
 ## Important decisions
 - Use image upload first; add camera later

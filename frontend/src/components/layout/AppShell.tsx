@@ -45,9 +45,15 @@ export function AppShell() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg)] flex flex-col md:flex-row">
+    <div className="min-h-screen bg-[var(--color-bg)] flex flex-col md:flex-row relative">
+      {/* Subtle Animated Background Elements */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] max-w-[500px] max-h-[500px] rounded-full bg-[var(--color-primary)]/10 blur-[120px] animate-pulse-gentle" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] max-w-[500px] max-h-[500px] rounded-full bg-blue-500/10 blur-[120px] animate-pulse-gentle" style={{ animationDelay: '2s' }} />
+      </div>
+      
       {/* Mobile Top Header */}
-      <header className="md:hidden bg-[var(--color-surface)] border-b border-[var(--color-border)] px-4 py-3 flex items-center justify-between sticky top-0 z-20">
+      <header className="md:hidden bg-[var(--color-surface)]/95 backdrop-blur-md border-b border-[var(--color-border)] px-4 py-3 flex items-center justify-between sticky top-0 z-20">
         <Link to="/app" className="flex items-center gap-2">
           <div className="gradient-primary p-1.5 rounded-lg">
             <ShieldCheck size={20} className="text-white" />
@@ -76,7 +82,7 @@ export function AppShell() {
       </header>
 
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex w-64 flex-col bg-[var(--color-surface)] border-r border-[var(--color-border)] min-h-screen sticky top-0">
+      <aside className="hidden md:flex w-64 flex-col bg-[var(--color-surface)]/95 backdrop-blur-md border-r border-[var(--color-border)] min-h-screen sticky top-0 z-20">
         <div className="p-6 border-b border-[var(--color-border)] flex items-center justify-between">
           <Link to="/app" className="flex items-center gap-3">
             <div className="gradient-primary p-2 rounded-xl">
@@ -126,7 +132,7 @@ export function AppShell() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 w-full p-4 md:p-8 pb-24 md:pb-8 overflow-y-auto flex flex-col">
+      <main className="flex-1 w-full p-4 md:p-8 pb-24 md:pb-8 overflow-y-auto flex flex-col z-10 relative">
         <div className="max-w-4xl mx-auto flex-1 w-full">
           <Outlet />
         </div>
