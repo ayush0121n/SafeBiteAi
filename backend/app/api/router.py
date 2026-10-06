@@ -128,13 +128,56 @@ async def create_scan(
             ]
 
     # ---------------------------------------------------------
-    # Validate: is this actually a food label?
+    # Try OpenFoodFacts FIRST (before validation) using the filename as a hint
     # ---------------------------------------------------------
-    if not _is_food_label_text(ocr_text):
-        # Not a food label — return an uncertain result immediately
-        scan_id_short = scan_id
+    product_name = (
+        file.filename.rsplit(".", 1)[0].replace("-", " ").replace("_", " ").title()
+        if file.filename else "Food Label"
+    )
+
+    real_ingredients = ""
+    real_nutrition = {}
+    try:
+        import httpx
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            off_res = await client.get(
+                f"https://world.openfoodfacts.org/cgi/search.pl"
+                f"?search_terms={product_name}&search_simple=1&action=process&json=1"
+            )
+            if off_res.status_code == 200:
+                off_data = off_res.json()
+                if off_data.get("products") and len(off_data["products"]) > 0:
+                    best_match = off_data["products"][0]
+                    product_name = best_match.get("product_name", product_name)
+                    real_ingredients = (
+                        best_match.get("ingredients_text_en")
+                        or best_match.get("ingredients_text")
+                        or ""
+                    )
+                    nut = best_match.get("nutriments", {})
+                    real_nutrition = {
+                        "serving_size": "100g",
+                        "calories": nut.get("energy-kcal_100g", 0),
+                        "total_sugar_g": nut.get("sugars_100g", 0),
+                        "added_sugar_g": nut.get("added-sugars_100g", 0),
+                        "sodium_mg": (nut.get("sodium_100g", 0) * 1000) if nut.get("sodium_100g") else 0,
+                        "saturated_fat_g": nut.get("saturated-fat_100g", 0),
+                        "fiber_g": nut.get("fiber_100g", 0),
+                        "protein_g": nut.get("proteins_100g", 0),
+                    }
+    except Exception as e:
+        print(f"OFF Search Error: {e}")
+
+    # The text we actually use for analysis: prefer real OCR, then OFF ingredients
+    raw_text = ocr_text if _is_food_label_text(ocr_text) else real_ingredients
+
+    # ---------------------------------------------------------
+    # Validate: is this actually a food label?
+    # Reject ONLY if BOTH OCR and OpenFoodFacts returned nothing useful.
+    # ---------------------------------------------------------
+    if not raw_text:
         result = {
-            "scanId": scan_id_short,
+            "scanId": scan_id,
             "productName": "Unknown Image",
             "status": "uncertain",
             "analysisState": "completed",
@@ -174,60 +217,22 @@ async def create_scan(
     # ---------------------------------------------------------
     # Confidence based on pipeline
     # ---------------------------------------------------------
-    if "YOLOv8" in pipeline_used or "PaddleOCR" in pipeline_used:
+    if real_ingredients and not _is_food_label_text(ocr_text):
+        # We're relying on OpenFoodFacts, not OCR — mark confidence accordingly
+        ocr_confidence = 0.70
+    elif "YOLOv8" in pipeline_used or "PaddleOCR" in pipeline_used:
         ocr_confidence = 0.92
     elif "Hugging Face" in pipeline_used:
         ocr_confidence = 0.80
     else:
-        # Unknown/mock — lower confidence
-        ocr_confidence = 0.55
+        ocr_confidence = 0.65
 
-    product_name = (
-        file.filename.rsplit(".", 1)[0].replace("-", " ").replace("_", " ").title()
-        if file.filename else "Food Label"
-    )
-
-    # Attempt to get real data from OpenFoodFacts using the product_name
-    real_ingredients = ""
-    real_nutrition = {}
-    try:
-        import httpx
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            off_res = await client.get(
-                f"https://world.openfoodfacts.org/cgi/search.pl"
-                f"?search_terms={product_name}&search_simple=1&action=process&json=1"
-            )
-            if off_res.status_code == 200:
-                off_data = off_res.json()
-                if off_data.get("products") and len(off_data["products"]) > 0:
-                    best_match = off_data["products"][0]
-                    product_name = best_match.get("product_name", product_name)
-                    real_ingredients = (
-                        best_match.get("ingredients_text_en")
-                        or best_match.get("ingredients_text")
-                        or ""
-                    )
-                    nut = best_match.get("nutriments", {})
-                    real_nutrition = {
-                        "serving_size": "100g",
-                        "calories": nut.get("energy-kcal_100g", 0),
-                        "total_sugar_g": nut.get("sugars_100g", 0),
-                        "added_sugar_g": nut.get("added-sugars_100g", 0),
-                        "sodium_mg": (nut.get("sodium_100g", 0) * 1000) if nut.get("sodium_100g") else 0,
-                        "saturated_fat_g": nut.get("saturated-fat_100g", 0),
-                        "fiber_g": nut.get("fiber_100g", 0),
-                        "protein_g": nut.get("proteins_100g", 0),
-                    }
-    except Exception as e:
-        print(f"OFF Search Error: {e}")
-
-    # Use real OCR text > OpenFoodFacts ingredients > nothing (don't inject fake text)
-    raw_text = real_ingredients if real_ingredients else ocr_text
-
+    # ---------------------------------------------------------
+    # Nutrition: use OpenFoodFacts data if available, else empty
+    # ---------------------------------------------------------
     if real_nutrition:
         nutrition = real_nutrition
     else:
-        # Provide empty nutrition rather than fake values
         nutrition = {
             "serving_size": "unknown",
             "calories": None,
