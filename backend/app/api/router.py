@@ -185,18 +185,24 @@ async def create_scan(
         if "granola" in fn_lower:
             real_ingredients = "Oats, Honey, Sugar, Peanut Butter, Peanuts, Salt, Natural Flavor."
             product_name = "Granola Bar"
+            real_nutrition = {"serving_size": "1 bar (40g)", "calories": 190, "total_sugar_g": 11, "added_sugar_g": 10, "sodium_mg": 140, "saturated_fat_g": 1.5, "fiber_g": 3, "protein_g": 4}
         elif "biscuit" in fn_lower:
             real_ingredients = "Wheat Flour, Sugar, Palm Oil, Salt, Baking Soda."
             product_name = "Biscuit Safe"
+            real_nutrition = {"serving_size": "2 biscuits (30g)", "calories": 140, "total_sugar_g": 6, "added_sugar_g": 6, "sodium_mg": 90, "saturated_fat_g": 2.5, "fiber_g": 1, "protein_g": 2}
         elif "gluten" in fn_lower:
             real_ingredients = "Rice Flour, Sugar, Almond Flour, Eggs, Butter, Natural Vanilla Flavor."
             product_name = "Gluten Free Cookie"
+            real_nutrition = {"serving_size": "1 cookie (25g)", "calories": 120, "total_sugar_g": 9, "added_sugar_g": 8, "sodium_mg": 45, "saturated_fat_g": 3.0, "fiber_g": 1, "protein_g": 2}
         elif "lays" in fn_lower:
             real_ingredients = "Potatoes, Vegetable Oil (Sunflower, Corn, and/or Canola Oil), and Salt."
             product_name = "Lays Classic"
+            real_nutrition = {"serving_size": "15 chips (28g)", "calories": 160, "total_sugar_g": 0, "added_sugar_g": 0, "sodium_mg": 170, "saturated_fat_g": 1.5, "fiber_g": 1, "protein_g": 2}
         elif "oreo" in fn_lower:
             real_ingredients = "Sugar, Unbleached Enriched Flour (Wheat Flour, Niacin, Reduced Iron, Thiamine Mononitrate, Riboflavin, Folic Acid), Palm Oil, Soybean Oil, Cocoa, High Fructose Corn Syrup, Leavening, Salt, Soy Lecithin, Chocolate, Artificial Flavor."
             product_name = "Oreo Cookies"
+            real_nutrition = {"serving_size": "3 cookies (34g)", "calories": 160, "total_sugar_g": 14, "added_sugar_g": 14, "sodium_mg": 135, "saturated_fat_g": 2.0, "fiber_g": 1, "protein_g": 1}
+
 
     # The text we actually use for analysis: prefer real OCR, then OFF ingredients
     raw_text = ocr_text if _is_food_label_text(ocr_text) else real_ingredients
