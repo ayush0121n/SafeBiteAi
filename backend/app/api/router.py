@@ -3,6 +3,7 @@ import os
 import uuid
 import asyncio
 import base64
+import re
 from datetime import datetime
 from pathlib import Path
 
@@ -24,10 +25,34 @@ RULES_DIR = Path(__file__).resolve().parent.parent / "rules"
 # In-memory store for MVP since there's no DB
 SCAN_DB = {}
 
+# Minimum character count for OCR text to be considered a real label
+MIN_LABEL_TEXT_LENGTH = 30
+
+# Words that strongly suggest a food label is present in the OCR text
+FOOD_LABEL_SIGNALS = [
+    "ingredients", "contains", "allergen", "nutrition", "calories", "serving",
+    "sugar", "sodium", "fat", "protein", "fiber", "carbohydrate", "vitamin",
+    "mineral", "preservative", "additive", "extract", "powder", "syrup",
+    "starch", "flour", "oil", "salt", "water", "milk", "wheat", "soy",
+    "per 100g", "per serving", "daily value", "% dv", "manufactured", "packed"
+]
+
 
 def _load_json(name: str) -> dict:
     with open(RULES_DIR / name, "r", encoding="utf-8") as f:
         return json.load(f)
+
+
+def _is_food_label_text(text: str) -> bool:
+    """
+    Heuristic: check if OCR-extracted text looks like a real food label.
+    Returns False if the text is too short or has no food-label keywords.
+    """
+    if not text or len(text.strip()) < MIN_LABEL_TEXT_LENGTH:
+        return False
+    text_lower = text.lower()
+    matched = sum(1 for signal in FOOD_LABEL_SIGNALS if signal in text_lower)
+    return matched >= 2  # At least 2 food-label signals must appear
 
 
 @api_router.post("/api/v1/scans", status_code=202)
@@ -51,7 +76,6 @@ async def create_scan(
     scan_id = str(uuid.uuid4())
 
     if privacy_mode.lower() != "true":
-        # Save temporarily
         upload_dir = Path(settings.upload_directory)
         upload_dir.mkdir(exist_ok=True)
         ext = (file.filename or "img").rsplit(".", 1)[-1] if file.filename else "jpg"
@@ -59,11 +83,13 @@ async def create_scan(
         path.write_bytes(content)
 
     # ---------------------------------------------------------
-    # Internal ML Container API (PaddleOCR) or Local Vision Pipeline
+    # OCR / Vision Pipeline
     # ---------------------------------------------------------
     ocr_text = ""
-    ocr_confidence = 0.90
+    ocr_confidence = 0.0
     vision_results = {}
+    detected_regions = []   # Only populated when real detection runs
+    pipeline_used = "none"
 
     if settings.ml_container_url:
         import httpx
@@ -74,40 +100,113 @@ async def create_scan(
                     headers={"Authorization": f"Bearer {settings.ml_container_api_key}"},
                     files={"file": (file.filename or "image.jpg", content, file.content_type)},
                 )
-                
                 if response.status_code == 200:
                     data = response.json()
                     ocr_text = data.get("text", "")
-                    ocr_confidence = data.get("confidence", 0.90)
+                    ocr_confidence = data.get("confidence", 0.85)
+                    pipeline_used = "ml_container"
                 else:
                     print(f"ML API Error: {response.status_code} {response.text}")
-                    ocr_text = "Error reading label. Internal ML service failed."
-                    ocr_confidence = 0.30
         except Exception as e:
             print(f"ML Request failed: {e}")
-            ocr_text = "Error reading label. Connection to ML service failed."
-            ocr_confidence = 0.30
     else:
-        # Use the local vision pipeline (HF OCR or mock)
         vision_results = await vision_pipeline.process_food_label(content)
         ocr_text = vision_results.get("extracted_text", "")
-        ocr_confidence = 0.92
+        pipeline_used = vision_results.get("pipeline", "local")
+        # Only expose real region detections (not hardcoded ones)
+        raw_regions = vision_results.get("region_details", [])
+        if raw_regions:
+            detected_regions = [
+                {
+                    "label": "detected_region",
+                    "confidence": round(r.get("confidence", 0.5), 2),
+                    "bbox": {
+                        "x": 0, "y": 0, "width": 100, "height": 100
+                    }
+                }
+                for r in raw_regions[:3]
+            ]
 
-    product_name = file.filename.rsplit(".", 1)[0].replace("-", " ").replace("_", " ").title() if file.filename else "Food Label"
-    
+    # ---------------------------------------------------------
+    # Validate: is this actually a food label?
+    # ---------------------------------------------------------
+    if not _is_food_label_text(ocr_text):
+        # Not a food label — return an uncertain result immediately
+        scan_id_short = scan_id
+        result = {
+            "scanId": scan_id_short,
+            "productName": "Unknown Image",
+            "status": "uncertain",
+            "analysisState": "completed",
+            "confidence": {
+                "overall": 0.10,
+                "ocr": 0.10,
+                "ingredients": 0.0,
+                "nutrition": 0.0,
+            },
+            "imageUrl": (
+                f"data:{file.content_type};base64,{base64.b64encode(content).decode('utf-8')}"
+                if privacy_mode.lower() == "true"
+                else f"/api/v1/scans/{scan_id}/image"
+            ),
+            "detectedRegions": [],
+            "extractedText": {
+                "ingredientsRaw": "",
+                "ingredientsNormalized": [],
+                "allergyStatement": "",
+            },
+            "allergens": [],
+            "nutrition": {},
+            "concerns": [],
+            "alternatives": [],
+            "disclaimers": [
+                "SafeBite AI could not detect a valid food label in this image. "
+                "Please upload a clear photo of an ingredient list or nutrition panel.",
+            ],
+            "createdAt": datetime.utcnow().isoformat() + "Z",
+            "pipelineUsed": pipeline_used,
+        }
+        if privacy_mode.lower() != "true":
+            SCAN_DB[scan_id] = result
+        await asyncio.sleep(0.5)
+        return result
+
+    # ---------------------------------------------------------
+    # Confidence based on pipeline
+    # ---------------------------------------------------------
+    if "YOLOv8" in pipeline_used or "PaddleOCR" in pipeline_used:
+        ocr_confidence = 0.92
+    elif "Hugging Face" in pipeline_used:
+        ocr_confidence = 0.80
+    else:
+        # Unknown/mock — lower confidence
+        ocr_confidence = 0.55
+
+    product_name = (
+        file.filename.rsplit(".", 1)[0].replace("-", " ").replace("_", " ").title()
+        if file.filename else "Food Label"
+    )
+
     # Attempt to get real data from OpenFoodFacts using the product_name
     real_ingredients = ""
     real_nutrition = {}
     try:
         import httpx
         async with httpx.AsyncClient(timeout=10.0) as client:
-            off_res = await client.get(f"https://world.openfoodfacts.org/cgi/search.pl?search_terms={product_name}&search_simple=1&action=process&json=1")
+            off_res = await client.get(
+                f"https://world.openfoodfacts.org/cgi/search.pl"
+                f"?search_terms={product_name}&search_simple=1&action=process&json=1"
+            )
             if off_res.status_code == 200:
                 off_data = off_res.json()
                 if off_data.get("products") and len(off_data["products"]) > 0:
                     best_match = off_data["products"][0]
                     product_name = best_match.get("product_name", product_name)
-                    real_ingredients = best_match.get("ingredients_text_en") or best_match.get("ingredients_text") or ""
+                    real_ingredients = (
+                        best_match.get("ingredients_text_en")
+                        or best_match.get("ingredients_text")
+                        or ""
+                    )
                     nut = best_match.get("nutriments", {})
                     real_nutrition = {
                         "serving_size": "100g",
@@ -122,21 +221,22 @@ async def create_scan(
     except Exception as e:
         print(f"OFF Search Error: {e}")
 
-    raw_text = real_ingredients if real_ingredients else (ocr_text if len(ocr_text) > 10 else "Ingredients: Rolled Oats, Sugar, Palm Oil, Corn Syrup, Whey Powder, Salt, Soy Lecithin. May contain peanuts and tree nuts.")
-    
+    # Use real OCR text > OpenFoodFacts ingredients > nothing (don't inject fake text)
+    raw_text = real_ingredients if real_ingredients else ocr_text
+
     if real_nutrition:
         nutrition = real_nutrition
     else:
-        # Nutrition mock fallback
+        # Provide empty nutrition rather than fake values
         nutrition = {
-            "serving_size": "1 bar (35g)",
-            "calories": 170,
-            "total_sugar_g": 12,
-            "added_sugar_g": 9,
-            "sodium_mg": 180,
-            "saturated_fat_g": 3.5,
-            "fiber_g": 1,
-            "protein_g": 2,
+            "serving_size": "unknown",
+            "calories": None,
+            "total_sugar_g": None,
+            "added_sugar_g": None,
+            "sodium_mg": None,
+            "saturated_fat_g": None,
+            "fiber_g": None,
+            "protein_g": None,
         }
 
     # 1. Ingredient parsing
@@ -148,16 +248,18 @@ async def create_scan(
     allergens = match_allergens(ingredients_normalized, allergy_stmt, user_allergies)
     allergen_status = determine_allergen_status(allergens, user_allergies)
 
-    # 3. Nutrition concerns
+    # 3. Nutrition concerns (skip if no real nutrition data)
     user_conditions = user_profile.get("conditions", [])
     user_preferences = user_profile.get("preferences", [])
-    concerns = evaluate_concerns(nutrition, user_conditions, user_preferences, ingredients_normalized)
+    concerns = (
+        evaluate_concerns(nutrition, user_conditions, user_preferences, ingredients_normalized)
+        if real_nutrition else []
+    )
 
     # 4. Overall status
-    ocr_confidence = 0.92
     overall_status = determine_overall_status(allergen_status, concerns, ocr_confidence)
 
-    # 5. Fetch Safer Alternatives
+    # 5. Safer Alternatives
     alternatives = fetch_safer_alternatives(product_name, allergens, concerns) if overall_status != "safe" else []
 
     result = {
@@ -166,17 +268,17 @@ async def create_scan(
         "status": overall_status,
         "analysisState": "completed",
         "confidence": {
-            "overall": 0.89,
+            "overall": round(ocr_confidence * 0.95, 2),
             "ocr": ocr_confidence,
-            "ingredients": 0.91,
-            "nutrition": 0.78,
+            "ingredients": round(ocr_confidence * 0.92, 2),
+            "nutrition": round(ocr_confidence * 0.80, 2) if real_nutrition else 0.0,
         },
-        "imageUrl": f"data:{file.content_type};base64,{base64.b64encode(content).decode('utf-8')}" if privacy_mode.lower() == "true" else f"/api/v1/scans/{scan_id}/image",
-        "detectedRegions": [
-            {"label": "ingredients_panel", "confidence": 0.95, "bbox": {"x": 10, "y": 10, "width": 80, "height": 30}},
-            {"label": "nutrition_facts_panel", "confidence": 0.92, "bbox": {"x": 10, "y": 50, "width": 80, "height": 40}},
-            {"label": "allergen_statement", "confidence": 0.88, "bbox": {"x": 10, "y": 95, "width": 80, "height": 10}}
-        ],
+        "imageUrl": (
+            f"data:{file.content_type};base64,{base64.b64encode(content).decode('utf-8')}"
+            if privacy_mode.lower() == "true"
+            else f"/api/v1/scans/{scan_id}/image"
+        ),
+        "detectedRegions": detected_regions,   # Only real detections or empty list
         "extractedText": {
             "ingredientsRaw": raw_text,
             "ingredientsNormalized": ingredients_normalized,
@@ -214,15 +316,13 @@ async def create_scan(
             "SafeBite AI provides educational guidance based on the readable label image. Always check the original package.",
         ],
         "createdAt": datetime.utcnow().isoformat() + "Z",
+        "pipelineUsed": pipeline_used,
     }
 
     if privacy_mode.lower() != "true":
-        # Save to in-memory DB
         SCAN_DB[scan_id] = result
 
-    # Simulate processing delay
-    await asyncio.sleep(1.5)
-
+    await asyncio.sleep(1.0)
     return result
 
 
@@ -238,7 +338,6 @@ from fastapi.responses import FileResponse
 @api_router.get("/api/v1/scans/{scan_id}/image")
 async def get_scan_image(scan_id: str):
     upload_dir = Path(settings.upload_directory)
-    # find any file starting with scan_id
     for ext in ["jpg", "jpeg", "png", "webp"]:
         f = upload_dir / f"{scan_id}.{ext}"
         if f.exists():
@@ -289,16 +388,12 @@ async def scan_meal(
     content = await file.read()
     if len(content) > MAX_SIZE:
         raise HTTPException(status_code=413, detail="Image must be smaller than 10 MB.")
-        
-    # Process the meal image using the ML vision pipeline (mocked on free tier unless HF token provided)
+
     meal_results = await vision_pipeline.process_meal_image(content)
-    
-    # Add unique ID and image URL
+
     meal_id = str(uuid.uuid4())
     meal_results["meal_id"] = meal_id
     meal_results["imageUrl"] = f"data:{file.content_type};base64,{base64.b64encode(content).decode('utf-8')}"
-    
-    # Simulate processing delay
-    await asyncio.sleep(1.5)
-    
+
+    await asyncio.sleep(1.0)
     return meal_results

@@ -281,52 +281,33 @@ class VisionPipeline:
             return self._mock_process_meal(image)
 
     def _mock_process(self, image: Image.Image) -> Dict[str, Any]:
-        """Fallback mock for environments without heavy ML libraries (like Render free tier)."""
+        """
+        Fallback for environments without real ML libraries.
+        Returns empty/uncertain result — never invents allergen text.
+        """
         return {
-            "status": "success",
-            "extracted_text": "Ingredients: Wheat flour, sugar, palm oil, salt, peanut extract, artificial flavors. Contains: Wheat, Peanuts.",
-            "regions_detected": 1,
-            "region_details": [{"box": [10, 10, 200, 200], "confidence": 0.99, "class": 0}],
-            "pipeline": "Mock Mode (Missing ultralytics/paddleocr)"
+            "status": "uncertain",
+            "extracted_text": "",  # Empty — no fake allergens
+            "regions_detected": 0,
+            "region_details": [],
+            "pipeline": "Mock Mode (ML libraries unavailable)"
         }
 
     def _mock_process_meal(self, image: Image.Image) -> Dict[str, Any]:
-        """Mock meal classification and nutrition estimation."""
+        """
+        Mock meal results — clearly labelled as demo data.
+        Only used when no real model is available.
+        """
         return {
             "status": "success",
-            "foods": [
-                {
-                    "name": "Grilled Chicken Breast",
-                    "confidence": 0.94,
-                    "box": [50, 50, 300, 250],
-                    "nutrition": {
-                        "calories": 165,
-                        "protein_g": 31,
-                        "carbs_g": 0,
-                        "fat_g": 3.6,
-                        "serving_g": 100
-                    }
-                },
-                {
-                    "name": "Steamed Broccoli",
-                    "confidence": 0.89,
-                    "box": [300, 50, 450, 200],
-                    "nutrition": {
-                        "calories": 35,
-                        "protein_g": 2.4,
-                        "carbs_g": 7.2,
-                        "fat_g": 0.4,
-                        "serving_g": 100
-                    }
-                }
-            ],
+            "foods": [],
             "total_nutrition": {
-                "calories": 200,
-                "protein_g": 33.4,
-                "carbs_g": 7.2,
-                "fat_g": 4.0
+                "calories": 0,
+                "protein_g": 0,
+                "carbs_g": 0,
+                "fat_g": 0
             },
-            "pipeline": "ViT Food-101 (Mock)"
+            "pipeline": "Mock Mode (ML libraries unavailable — install ultralytics for real detection)"
         }
 
 vision_pipeline = VisionPipeline()

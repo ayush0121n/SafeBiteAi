@@ -112,6 +112,28 @@ export function ScanResultsPage() {
         <ArrowLeft size={16} /> Back to dashboard
       </Link>
 
+      {/* Not-a-food-label warning */}
+      {result.status === "uncertain" && !result.extractedText?.ingredientsRaw && (
+        <section className="bg-[var(--color-uncertain-bg)] border-2 border-[var(--color-uncertain)] rounded-2xl p-6 text-center animate-slide-up">
+          <HelpCircle size={48} className="mx-auto text-[var(--color-uncertain)] mb-3" />
+          <h2 className="text-2xl font-bold text-[var(--color-text)] mb-2">No food label detected</h2>
+          <p className="text-[var(--color-muted)] leading-relaxed mb-4">
+            SafeBite could not find any ingredient or nutrition text in this image. This might be a photo of a person, a room, or a product without a visible label.
+          </p>
+          <ul className="text-sm text-[var(--color-muted)] text-left inline-block space-y-1 mb-5">
+            <li>✔ Upload a clear photo of the <strong>ingredients list</strong></li>
+            <li>✔ Make sure the text is <strong>in focus and well lit</strong></li>
+            <li>✔ Avoid selfies, blank packaging, or blurry images</li>
+          </ul>
+          <Link
+            to="/app/scan"
+            className="inline-flex items-center gap-2 gradient-primary text-white font-bold py-3 px-8 rounded-xl shadow-md hover:shadow-lg transition-all"
+          >
+            Try Again
+          </Link>
+        </section>
+      )}
+
       {/* Overall Status */}
       <section className={`${cfg.bg} rounded-2xl p-8 text-center animate-slide-up shadow-sm transform-style-3d hover:scale-[1.01] transition-transform duration-300`}>
         <div className="transform-translate-z-20">
