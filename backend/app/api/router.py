@@ -14,6 +14,7 @@ from app.services.ingredient_service import parse_ingredients_text, resolve_alia
 from app.services.allergen_service import match_allergens, determine_allergen_status
 from app.services.concern_service import evaluate_concerns, determine_overall_status
 from app.services.recommendation_service import fetch_safer_alternatives
+from app.services.sugar_nova_service import analyze_sugar_and_nova
 from app.vision.ml_pipeline import vision_pipeline
 
 api_router = APIRouter()
@@ -260,6 +261,19 @@ async def create_scan(
         evaluate_concerns(nutrition, user_conditions, user_preferences, ingredients_normalized)
         if real_nutrition else []
     )
+
+    sugar_nova = analyze_sugar_and_nova(ingredients_normalized)
+    
+    # Add as a concern if relevant
+    if sugar_nova["hidden_sugar_count"] > 0 or sugar_nova["is_ultra_processed"]:
+        concerns.append({
+            "category": "processing",
+            "level": "higher" if sugar_nova["is_ultra_processed"] else "moderate",
+            "title": f"Hidden Sugars & Processing Level",
+            "plain_language_reason": f"Found {sugar_nova['hidden_sugar_count']} hidden sugar(s). Classification: {sugar_nova['nova_label']}.",
+            "factors": sugar_nova["hidden_sugars"] + [sugar_nova["nova_label"]]
+        })
+
 
     # 4. Overall status
     overall_status = determine_overall_status(allergen_status, concerns, ocr_confidence)

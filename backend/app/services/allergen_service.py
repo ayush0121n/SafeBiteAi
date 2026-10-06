@@ -56,13 +56,23 @@ def match_allergens(
             stmt_lower = allergy_statement.lower()
             for alias in aliases:
                 if alias in stmt_lower:
-                    is_may_contain = "may contain" in stmt_lower or "traces" in stmt_lower
-                    matches.append({
-                        "name": allergen_name.capitalize(),
-                        "match_type": "may_contain" if is_may_contain else "contains_statement",
-                        "severity": "possible" if is_may_contain else severity,
-                        "matched_text": allergy_statement,
-                    })
+                    is_may_contain = "may contain" in stmt_lower or "traces" in stmt_lower or "produced in a facility" in stmt_lower
+                    if is_may_contain:
+                        matches.append({
+                            "name": allergen_name.capitalize(),
+                            "match_type": "may_contain",
+                            "severity": "possible",
+                            "matched_text": allergy_statement,
+                            "probability": "High" if "may contain" in stmt_lower else "Medium",
+                            "reason": "Shared equipment / facility statement detected"
+                        })
+                    else:
+                        matches.append({
+                            "name": allergen_name.capitalize(),
+                            "match_type": "contains_statement",
+                            "severity": severity,
+                            "matched_text": allergy_statement,
+                        })
                     seen.add(allergen_name)
                     break
 

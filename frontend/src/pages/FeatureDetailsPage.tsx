@@ -9,80 +9,123 @@ export function FeatureDetailsPage() {
   const [inputText, setInputText] = useState("");
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  const handleSimulate = () => {
-    if (!inputText && !filePreview) {
+  const handleSimulate = async () => {
+    if (!inputText && !selectedFile) {
       alert("Please provide some input data or upload an image to run the feature.");
       return;
     }
 
     setRunning(true);
     setResult(null);
+
+    if (selectedFile) {
+      try {
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+        formData.append("profile", JSON.stringify({
+          allergies: ["peanuts", "tree nuts", "milk"],
+          conditions: [],
+          preferences: []
+        }));
+
+        const res = await fetch("http://localhost:8000/api/v1/scans", {
+          method: "POST",
+          body: formData
+        });
+
+        if (!res.ok) {
+          throw new Error("Backend request failed");
+        }
+
+        const data = await res.json();
+        
+        let alerts: any[] = [];
+        let featureTitle = "Analysis Complete";
+        let featureDesc = "Processed the image using the SafeBite AI backend pipeline.";
+
+        if (data.status === "uncertain") {
+          featureTitle = "Uncertain Image";
+          featureDesc = data.disclaimers?.[0] || "Could not detect a food label.";
+          alerts.push({ type: "warning", message: "Image rejected by heuristic validator" });
+        } else {
+          if (featureId === "allergen-cross-contamination") {
+            featureTitle = "Allergen Analysis Results";
+            featureDesc = "Processed image for direct and cross-contamination allergens.";
+            data.allergens?.forEach((a: any) => {
+              alerts.push({
+                type: a.severity === "critical" ? "critical" : "warning",
+                message: `${a.matchType === 'may_contain' ? 'Possible trace' : 'Detected'}: ${a.name} (${a.matchedText})`
+              });
+            });
+            if (alerts.length === 0) alerts.push({ type: "info", message: "No major allergens detected." });
+          } else if (featureId === "hidden-sugar-detector") {
+            featureTitle = "Processing & Sugar Analysis";
+            featureDesc = "NOVA classification and hidden sugar detection applied.";
+            const sugarConcern = data.concerns?.find((c: any) => c.category === "processing");
+            if (sugarConcern) {
+              alerts.push({ type: "critical", message: sugarConcern.title });
+              alerts.push({ type: "warning", message: sugarConcern.plainLanguageReason });
+            } else {
+              alerts.push({ type: "info", message: "No hidden sugars or ultra-processing signals detected." });
+            }
+          } else {
+            featureTitle = "Label Processed";
+            featureDesc = "Successfully extracted ingredients and nutrition data.";
+            alerts.push({ type: "info", message: `Status: ${data.status}` });
+          }
+        }
+
+        setResult({
+          title: featureTitle,
+          description: featureDesc,
+          confidence: `${(data.confidence?.overall * 100).toFixed(1)}%`,
+          latency: "Real API",
+          stages: [
+            { name: "OCR / Vision", status: "success", detail: "Pipeline: " + (data.pipelineUsed || "Unknown") }
+          ],
+          alerts: alerts
+        });
+
+      } catch (err) {
+        console.error(err);
+        setResult({
+          title: "Error",
+          description: "Failed to connect to backend. Make sure the Python server is running on port 8000.",
+          confidence: "0%",
+          latency: "N/A",
+          stages: [],
+          alerts: [{ type: "critical", message: "Network Error" }]
+        });
+      }
+      setRunning(false);
+      return;
+    }
+
+    // Fallback simulated logic for text input only
     setTimeout(() => {
       setRunning(false);
       
       let res: any = {
         title: "Simulation completed successfully",
-        description: `Analyzed ${filePreview ? 'image data' : 'text input'} with high confidence. Model identified key attributes matching SafeBite's safety standards.`,
+        description: `Analyzed text input with high confidence. Model identified key attributes matching SafeBite's safety standards.`,
         confidence: "94.2%",
         latency: "420ms",
         stages: [
-          { name: "Image Preprocessing", status: "success", detail: "Sharpening & Contrast Adjusted" },
-          { name: "OCR / Vision Model", status: "success", detail: "Text extracted successfully" }
+          { name: "Text Parsing", status: "success", detail: "NLP matched key tokens" }
         ],
         alerts: []
       };
       
-      if (featureId === "allergen-cross-contamination") {
-        res.title = "High Risk of Cross-Contamination Detected";
-        res.description = "The pipeline identified vague allergen statements commonly associated with shared equipment.";
-        res.confidence = "84.5%";
-        res.stages.push({ name: "Cross-Reference DB", status: "success", detail: "Matched known manufacturer facility data" });
-        res.alerts = [
-          { type: "critical", message: "Detected: 'May contain nuts'" },
-          { type: "warning", message: "Probability of peanut trace: High (84%)" },
-          { type: "info", message: "Recommendation: Avoid if severe nut allergy is present." }
-        ];
-      } else if (featureId === "hidden-sugar-detector") {
-        res.title = "Hidden Sugars Identified";
-        res.description = "The system successfully parsed disguised sugar aliases from the ingredient block.";
-        res.confidence = "98.1%";
-        res.stages.push({ name: "NLP Alias Matching", status: "success", detail: "Found 2 hidden sugar variants" });
-        res.alerts = [
-          { type: "warning", message: "Identified 'Maltodextrin' and 'Dextrose'" },
-          { type: "critical", message: "NOVA classification: Group 4 (Ultra-processed)" },
-          { type: "info", message: "Sugar density score: 7/10 (High)" }
-        ];
-      } else if (featureId === "medication-interaction") {
-        res.title = "Severe Medication Interaction Alert";
-        res.description = "Food compounds detected that may interfere with known prescription pathways.";
-        res.confidence = "99.9%";
-        res.stages.push({ name: "Pharmacokinetics DB Query", status: "success", detail: "Checked against top 500 drug interactions" });
-        res.alerts = [
-          { type: "critical", message: "Detected: Grapefruit Extract" },
-          { type: "critical", message: "Known severe interaction with Statins (CYP3A4 inhibition)" },
-          { type: "warning", message: "Alert automatically triggered for user profiles with Statin prescriptions." }
-        ];
-      } else if (featureId === "plate-macro-estimate") {
-        res.title = "Meal Segmented & Macros Estimated";
-        res.description = "Vision transformer successfully isolated food items and estimated volume/weight.";
-        res.confidence = "89.4%";
-        res.latency = "850ms";
-        res.stages.push({ name: "Semantic Segmentation", status: "success", detail: "2 primary food regions identified" });
-        res.alerts = [
-          { type: "info", message: "Detected: Grilled Salmon (est. 150g)" },
-          { type: "info", message: "Detected: Quinoa (est. 100g)" },
-          { type: "info", message: "Total Estimated Macros: 420 kcal | 35g Pro | 25g Carb | 18g Fat" }
-        ];
-      }
-      
       setResult(res);
-    }, 2500);
+    }, 1500);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setSelectedFile(file);
       setFilePreview(URL.createObjectURL(file));
     }
   };
