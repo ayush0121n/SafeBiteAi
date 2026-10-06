@@ -278,15 +278,22 @@ async def create_scan(
     # Medication interactions
     user_medications = user_profile.get("medications", [])
     if user_medications:
-        med_alerts = check_medication_interactions(ingredients_normalized, user_medications)
-        concerns.extend(med_alerts)
+        med_interactions = check_medication_interactions(ingredients_normalized, user_medications)
+        for interaction in med_interactions:
+            concerns.append({
+                "category": "medication",
+                "level": "higher" if interaction["severity"] in ["high", "critical"] else "moderate",
+                "title": f"Medication Interaction: {interaction['medication']}",
+                "plain_language_reason": interaction["reason"],
+                "factors": interaction["matched_foods"]
+            })
 
 
     # 4. Overall status
     overall_status = determine_overall_status(allergen_status, concerns, ocr_confidence)
 
     # 5. Safer Alternatives
-    alternatives = fetch_safer_alternatives(product_name, allergens, concerns) if overall_status != "safe" else []
+    alternatives = await fetch_safer_alternatives(product_name, allergens, concerns) if overall_status != "safe" else []
 
     result = {
         "scanId": scan_id,

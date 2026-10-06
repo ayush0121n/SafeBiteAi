@@ -3,6 +3,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useProfileStore } from "../features/profile/profile.store";
 import { createScan, createMealScan } from "../api/client";
+import { assessLabelQuality, LabelQualityResult } from "../lib/labelQuality";
 
 export function NewScanPage() {
   const navigate = useNavigate();
@@ -11,6 +12,7 @@ export function NewScanPage() {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [qualityWarning, setQualityWarning] = useState<LabelQualityResult | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const [privacyMode, setPrivacyMode] = useState(false);
@@ -25,8 +27,9 @@ export function NewScanPage() {
   const MAX_SIZE = 10 * 1024 * 1024;
   const ALLOWED = ["image/jpeg", "image/png", "image/webp"];
 
-  const processFile = useCallback((f: File) => {
+  const processFile = useCallback(async (f: File) => {
     setError(null);
+    setQualityWarning(null);
     if (!ALLOWED.includes(f.type)) {
       setError("Please upload a JPG, PNG, or WEBP image.");
       return;
@@ -39,7 +42,15 @@ export function NewScanPage() {
     const reader = new FileReader();
     reader.onload = (e) => setPreview(e.target?.result as string);
     reader.readAsDataURL(f);
-  }, []);
+
+    // Assess quality if it's a label scan
+    if (scanMode === "label") {
+      const q = await assessLabelQuality(f);
+      if (!q.isAcceptable) {
+        setQualityWarning(q);
+      }
+    }
+  }, [scanMode]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) processFile(e.target.files[0]);
@@ -55,6 +66,7 @@ export function NewScanPage() {
     setFile(null);
     setPreview(null);
     setError(null);
+    setQualityWarning(null);
     stopCamera();
   };
   
@@ -265,8 +277,38 @@ export function NewScanPage() {
         </div>
       )}
 
+      {/* Quality Warning */}
+      {qualityWarning && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-900 p-5 rounded-2xl shadow-sm animate-slide-up">
+          <h4 className="font-bold text-lg mb-2 flex items-center gap-2">
+            <Info className="text-amber-500" />
+            Low Image Quality (Score: {qualityWarning.score}/100)
+          </h4>
+          <p className="mb-3">Our system might have trouble reading this label correctly.</p>
+          <ul className="list-disc list-inside space-y-1 mb-2">
+            {qualityWarning.issues.map((iss, i) => (
+              <li key={i}>{iss}</li>
+            ))}
+          </ul>
+          <p className="text-sm font-bold opacity-80 mt-2">Tips:</p>
+          <ul className="list-disc list-inside text-sm opacity-80 space-y-1">
+            {qualityWarning.suggestions.map((sug, i) => (
+              <li key={i}>{sug}</li>
+            ))}
+          </ul>
+          <div className="mt-4 pt-4 border-t border-amber-200 flex justify-end">
+            <button
+              onClick={() => setQualityWarning(null)}
+              className="text-amber-800 hover:text-amber-900 font-bold underline text-sm"
+            >
+              Ignore & Continue Anyway
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Analyze Button */}
-      {file && !analyzing && (
+      {file && !analyzing && !qualityWarning && (
         <div className="space-y-4 animate-slide-up">
           <label className="flex items-center gap-3 p-4 border border-[var(--color-border)] rounded-xl cursor-pointer bg-[var(--color-surface)] hover:bg-[var(--color-bg)] transition-colors">
             <input 

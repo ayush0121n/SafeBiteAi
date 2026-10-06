@@ -16,6 +16,21 @@ export function SettingsPage() {
     alert("Settings saved successfully!");
   };
 
+  const toggleKidsElderlyMode = (enabled: boolean) => {
+    setAccessibility({ 
+      ...profile.accessibility, 
+      kidsElderlyMode: enabled,
+      largeText: enabled ? true : profile.accessibility?.largeText,
+      voiceReadout: enabled ? true : profile.accessibility?.voiceReadout
+    });
+    
+    if (enabled) {
+      document.documentElement.classList.add("large-text");
+    } else {
+      document.documentElement.classList.remove("large-text");
+    }
+  };
+
   return (
     <div className="max-w-3xl mx-auto py-8 animate-fade-in space-y-6">
       <Link to="/app" className="text-[var(--color-primary)] font-bold flex items-center gap-2 mb-4">
@@ -79,7 +94,7 @@ export function SettingsPage() {
                     type="checkbox"
                     className="sr-only peer"
                     checked={profile.accessibility?.kidsElderlyMode || false}
-                    onChange={(e) => setAccessibility({ ...profile.accessibility, kidsElderlyMode: e.target.checked })}
+                    onChange={(e) => toggleKidsElderlyMode(e.target.checked)}
                   />
                   <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[var(--color-primary)]"></div>
                 </label>

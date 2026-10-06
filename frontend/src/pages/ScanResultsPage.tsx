@@ -6,6 +6,7 @@ import {
 import { useState, useEffect } from "react";
 import { useParams, Link, useLocation } from "react-router-dom";
 import { useScansStore } from "../features/scans/scans.store";
+import { useProfileStore } from "../features/profile/profile.store";
 import { API_URL } from "../api/client";
 import type { ScanResult, ScanStatus, ConcernLevel } from "../api/types";
 
@@ -29,6 +30,7 @@ export function ScanResultsPage() {
   const location = useLocation();
   const scans = useScansStore((s) => s.scans);
   const addScan = useScansStore((s) => s.addScan);
+  const profile = useProfileStore((s) => s.profile);
 
   const [result, setResult] = useState<ScanResult | null>(
     location.state?.result || scans.find((s) => s.scanId === scanId) || null
@@ -46,6 +48,17 @@ export function ScanResultsPage() {
       });
     }
   }, [scanId, result]);
+
+  // Auto-read voice for Kids/Elderly mode
+  useEffect(() => {
+    if (result && profile.accessibility?.kidsElderlyMode) {
+      // Small delay to ensure the page is rendered and user is ready
+      const timer = setTimeout(() => {
+        handleVoiceRead();
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  }, [result, profile.accessibility?.kidsElderlyMode]);
 
   const [showIngredients, setShowIngredients] = useState(false);
 
