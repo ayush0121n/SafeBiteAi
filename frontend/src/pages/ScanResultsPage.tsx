@@ -3,7 +3,7 @@ import {
   AlertTriangle, Volume2, Save, ChevronDown, ChevronUp,
   ArrowLeft, Share2,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, Link, useLocation } from "react-router-dom";
 import { useScansStore } from "../features/scans/scans.store";
 import { useProfileStore } from "../features/profile/profile.store";
@@ -49,6 +49,26 @@ export function ScanResultsPage() {
     }
   }, [scanId, result]);
 
+  const handleVoiceRead = useCallback(() => {
+    if (!result || !("speechSynthesis" in window)) return;
+    const cfg = statusConfig[result.status];
+    window.speechSynthesis.cancel();
+    const parts = [
+      `Overall result: ${cfg.label}.`,
+      result.allergens.length > 0
+        ? `Allergen alerts: ${result.allergens.map((a) => `${a.name}, matched from ${a.matchedText}`).join(". ")}.`
+        : "No allergen alerts found.",
+      ...result.concerns.map((c) => `${c.title}: ${c.plainLanguageReason}`),
+      ...(result.alternatives && result.alternatives.length > 0 
+        ? ["Safer alternatives available: " + result.alternatives.map((alt) => alt.productName).join(", ")]
+        : []),
+      result.disclaimers[0],
+    ];
+    const utterance = new SpeechSynthesisUtterance(parts.join(" "));
+    utterance.rate = 0.9;
+    window.speechSynthesis.speak(utterance);
+  }, [result]);
+
   // Auto-read voice for Kids/Elderly mode
   useEffect(() => {
     if (result && profile.accessibility?.kidsElderlyMode) {
@@ -58,7 +78,7 @@ export function ScanResultsPage() {
       }, 800);
       return () => clearTimeout(timer);
     }
-  }, [result, profile.accessibility?.kidsElderlyMode]);
+  }, [result, profile.accessibility?.kidsElderlyMode, handleVoiceRead]);
 
   const [showIngredients, setShowIngredients] = useState(false);
 
@@ -87,26 +107,6 @@ export function ScanResultsPage() {
 
   const handleSave = () => {
     if (!saved) { addScan(result); }
-  };
-
-  const handleVoiceRead = () => {
-    if ("speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
-      const parts = [
-        `Overall result: ${cfg.label}.`,
-        result.allergens.length > 0
-          ? `Allergen alerts: ${result.allergens.map((a) => `${a.name}, matched from ${a.matchedText}`).join(". ")}.`
-          : "No allergen alerts found.",
-        ...result.concerns.map((c) => `${c.title}: ${c.plainLanguageReason}`),
-        ...(result.alternatives && result.alternatives.length > 0 
-          ? ["Safer alternatives available: " + result.alternatives.map((alt) => alt.productName).join(", ")]
-          : []),
-        result.disclaimers[0],
-      ];
-      const utterance = new SpeechSynthesisUtterance(parts.join(" "));
-      utterance.rate = 0.9;
-      window.speechSynthesis.speak(utterance);
-    }
   };
 
   const handleShare = async () => {
