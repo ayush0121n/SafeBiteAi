@@ -132,10 +132,11 @@ async def create_scan(
     # ---------------------------------------------------------
     # Try OpenFoodFacts FIRST (before validation) using the filename as a hint
     # ---------------------------------------------------------
-    product_name = (
-        file.filename.rsplit(".", 1)[0].replace("-", " ").replace("_", " ").title()
-        if file.filename else "Food Label"
-    )
+    raw_name = file.filename.rsplit(".", 1)[0].replace("-", " ").replace("_", " ") if file.filename else "Food Label"
+    # Remove digits and common test suffixes so OFF can actually find it
+    raw_name = re.sub(r'\d+', '', raw_name)
+    raw_name = re.sub(r'(?i)\b(label|test|image|scan|capture)\b', '', raw_name)
+    product_name = raw_name.strip().title() or "Food Label"
 
     real_ingredients = ""
     real_nutrition = {}
@@ -143,8 +144,13 @@ async def create_scan(
         import httpx
         async with httpx.AsyncClient(timeout=10.0) as client:
             off_res = await client.get(
-                f"https://world.openfoodfacts.org/cgi/search.pl"
-                f"?search_terms={product_name}&search_simple=1&action=process&json=1"
+                "https://world.openfoodfacts.org/cgi/search.pl",
+                params={
+                    "search_terms": product_name,
+                    "search_simple": "1",
+                    "action": "process",
+                    "json": "1"
+                }
             )
             if off_res.status_code == 200:
                 off_data = off_res.json()
