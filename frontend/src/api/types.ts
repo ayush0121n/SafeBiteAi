@@ -22,6 +22,7 @@ export interface UserProfile {
     largeText: boolean;
     highContrast: boolean;
     voiceReadout: boolean;
+    kidsElderlyMode?: boolean;
   };
 }
 

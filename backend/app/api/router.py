@@ -15,6 +15,7 @@ from app.services.allergen_service import match_allergens, determine_allergen_st
 from app.services.concern_service import evaluate_concerns, determine_overall_status
 from app.services.recommendation_service import fetch_safer_alternatives
 from app.services.sugar_nova_service import analyze_sugar_and_nova
+from app.services.medication_service import check_medication_interactions
 from app.vision.ml_pipeline import vision_pipeline
 
 api_router = APIRouter()
@@ -273,6 +274,12 @@ async def create_scan(
             "plain_language_reason": f"Found {sugar_nova['hidden_sugar_count']} hidden sugar(s). Classification: {sugar_nova['nova_label']}.",
             "factors": sugar_nova["hidden_sugars"] + [sugar_nova["nova_label"]]
         })
+
+    # Medication interactions
+    user_medications = user_profile.get("medications", [])
+    if user_medications:
+        med_alerts = check_medication_interactions(ingredients_normalized, user_medications)
+        concerns.extend(med_alerts)
 
 
     # 4. Overall status

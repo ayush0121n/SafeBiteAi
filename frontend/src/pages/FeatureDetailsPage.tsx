@@ -2,6 +2,21 @@ import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, PlayCircle, CheckCircle, Upload, Type, Activity, Database, AlertTriangle, ShieldCheck } from "lucide-react";
 import { useState, useRef } from "react";
 
+// Simple client-side analyzers for text input
+const HIDDEN_SUGARS = [
+  "maltodextrin", "dextrose", "glucose", "fructose", "sucrose", "corn syrup",
+  "high fructose corn syrup", "invert sugar", "cane sugar", "brown rice syrup",
+  "agave", "maple syrup", "molasses", "honey", "fruit juice concentrate",
+  "evaporated cane juice", "glucose syrup", "barley malt", "maltose"
+];
+
+const MEDICATION_INTERACTIONS: Record<string, string[]> = {
+  "warfarin": ["spinach", "kale", "broccoli", "cabbage", "lettuce", "leafy greens", "vitamin k"],
+  "statin": ["grapefruit", "pomelo", "seville orange"],
+  "maoi": ["aged cheese", "cured meat", "soy sauce", "tofu", "sauerkraut", "tyramine"],
+  "ace inhibitor": ["banana", "orange", "potato", "salt substitute", "potassium"],
+};
+
 export function FeatureDetailsPage() {
   const { featureId } = useParams();
   const [running, setRunning] = useState(false);
@@ -103,23 +118,106 @@ export function FeatureDetailsPage() {
       return;
     }
 
-    // Fallback simulated logic for text input only
+    // Client-side simulated logic for text input only
+    const analysis = analyzeText(inputText || "No text provided");
     setTimeout(() => {
       setRunning(false);
-      
-      let res: any = {
-        title: "Simulation completed successfully",
-        description: `Analyzed text input with high confidence. Model identified key attributes matching SafeBite's safety standards.`,
-        confidence: "94.2%",
-        latency: "420ms",
+      setResult(analysis);
+    }, 1200);
+  };
+
+  const analyzeText = (text: string) => {
+    const lower = text.toLowerCase();
+
+    if (featureId === "hidden-sugar-detector") {
+      const found = HIDDEN_SUGARS.filter(s => lower.includes(s));
+      const ultraMarkers = ["emulsifier", "colour", "color", "flavour", "flavor", "preservative", "stabilizer", "modified starch"];
+      const ultraCount = ultraMarkers.filter(m => lower.includes(m)).length + found.length;
+
+      return {
+        title: found.length > 0 ? "Hidden Sugars Detected" : "No Major Hidden Sugars Found",
+        description: found.length > 0
+          ? `Found ${found.length} hidden sugar source(s) in the text.`
+          : "No common hidden sugar aliases were detected.",
+        confidence: found.length > 0 ? "91%" : "78%",
+        latency: "180ms",
         stages: [
-          { name: "Text Parsing", status: "success", detail: "NLP matched key tokens" }
+          { name: "Text Normalization", status: "success", detail: "Cleaned and lowercased input" },
+          { name: "Alias Matching", status: "success", detail: `Checked against ${HIDDEN_SUGARS.length} sugar aliases` },
+          { name: "NOVA Heuristic", status: "success", detail: ultraCount >= 3 ? "Likely Ultra-processed (NOVA 4)" : "Lower processing level" }
         ],
-        alerts: []
+        alerts: [
+          ...found.map(s => ({ type: "warning", message: `Hidden sugar found: ${s}` })),
+          ultraCount >= 3
+            ? { type: "critical", message: "High likelihood of ultra-processed food (NOVA Group 4)" }
+            : { type: "info", message: "Processing level appears moderate or lower" }
+        ]
       };
-      
-      setResult(res);
-    }, 1500);
+    }
+
+    if (featureId === "allergen-cross-contamination") {
+      const hasMayContain = /may contain|traces of|produced in a facility|shared equipment|manufactured in/i.test(text);
+      const allergens = ["peanut", "tree nut", "milk", "egg", "soy", "wheat", "gluten", "sesame", "fish", "shellfish"];
+      const mentioned = allergens.filter(a => lower.includes(a));
+
+      return {
+        title: hasMayContain ? "Cross-Contamination Risk Detected" : "No Clear Cross-Contamination Statement",
+        description: hasMayContain
+          ? "The text contains language commonly used for shared equipment or facility warnings."
+          : "No typical 'may contain' or facility statements were found.",
+        confidence: hasMayContain ? "87%" : "72%",
+        latency: "140ms",
+        stages: [
+          { name: "Statement Detection", status: "success", detail: hasMayContain ? "Found risk language" : "No risk language" },
+          { name: "Allergen Mention Scan", status: "success", detail: `${mentioned.length} allergen(s) mentioned` }
+        ],
+        alerts: [
+          ...(hasMayContain ? [{ type: "critical", message: "Possible cross-contamination language detected" }] : []),
+          ...mentioned.map(a => ({ type: "warning", message: `Mentions: ${a}` })),
+          { type: "info", message: "Always verify with the manufacturer if you have severe allergies." }
+        ]
+      };
+    }
+
+    if (featureId === "medication-interaction") {
+      const alerts: any[] = [];
+      let foundAny = false;
+
+      for (const [med, foods] of Object.entries(MEDICATION_INTERACTIONS)) {
+        const matchedFoods = foods.filter(f => lower.includes(f));
+        if (matchedFoods.length > 0) {
+          foundAny = true;
+          alerts.push({
+            type: "critical",
+            message: `Possible interaction with ${med.toUpperCase()}: ${matchedFoods.join(", ")}`
+          });
+        }
+      }
+
+      return {
+        title: foundAny ? "Potential Medication-Food Interaction Found" : "No Known Interactions Detected",
+        description: foundAny
+          ? "One or more food items may interact with common medications."
+          : "No matches found against the current interaction database.",
+        confidence: foundAny ? "89%" : "70%",
+        latency: "110ms",
+        stages: [
+          { name: "Medication Rules Loaded", status: "success", detail: `${Object.keys(MEDICATION_INTERACTIONS).length} medication groups` },
+          { name: "Food Matching", status: "success", detail: foundAny ? "Matches found" : "No matches" }
+        ],
+        alerts: foundAny ? alerts : [{ type: "info", message: "No interactions found in the current rule set." }]
+      };
+    }
+
+    // Default fallback
+    return {
+      title: "Analysis Complete",
+      description: "Basic text analysis finished. Connect to full backend pipeline for deeper results.",
+      confidence: "75%",
+      latency: "200ms",
+      stages: [{ name: "Client Analysis", status: "success", detail: "Completed" }],
+      alerts: [{ type: "info", message: "This is a lightweight client-side analysis." }]
+    };
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -5,6 +5,7 @@ import { useProfileStore } from "../features/profile/profile.store";
 
 export function SettingsPage() {
   const profile = useProfileStore((s) => s.profile);
+  const setAccessibility = useProfileStore((s) => s.setAccessibility);
   const [notifications, setNotifications] = useState(true);
   const [dataSharing, setDataSharing] = useState(false);
   const [offlineSync, setOfflineSync] = useState(true);
@@ -56,6 +57,30 @@ export function SettingsPage() {
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" className="sr-only peer" checked={dataSharing} onChange={(e) => setDataSharing(e.target.checked)} />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[var(--color-primary)]"></div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          {/* Accessibility */}
+          <div>
+            <h2 className="text-xl font-bold text-[var(--color-text)] mb-4 flex items-center gap-2">
+              <Activity className="text-[var(--color-primary)]" /> Accessibility
+            </h2>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-4 bg-[var(--color-bg)] rounded-xl border border-[var(--color-border)]">
+                <div>
+                  <p className="font-bold text-[var(--color-text)]">Kids / Elderly Mode</p>
+                  <p className="text-sm text-[var(--color-muted)]">Larger text, simpler language, automatic voice readout</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={profile.accessibility?.kidsElderlyMode || false}
+                    onChange={(e) => setAccessibility({ ...profile.accessibility, kidsElderlyMode: e.target.checked })}
+                  />
                   <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[var(--color-primary)]"></div>
                 </label>
               </div>
