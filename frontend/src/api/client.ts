@@ -64,3 +64,10 @@ export async function createMealScan(file: File): Promise<any> {
   body.append("file", file);
   return apiClient("/api/v1/meals", { method: "POST", body });
 }
+
+export async function analyzeText(text: string, featureId: string, profile: any = {}): Promise<any> {
+  return apiClient("/api/v1/analyze-text", {
+    method: "POST",
+    body: JSON.stringify({ text, feature_id: featureId, profile }),
+  });
+}

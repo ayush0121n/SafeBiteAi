@@ -22,7 +22,7 @@ export function ProductDetailPage() {
           // Process data
           const p = data.product;
           
-          // Basic rules for mock safety status
+          // Apply safety rules based on user profile
           const allergens = p.allergens_tags ? p.allergens_tags.map((t: string) => t.replace("en:", "").replace("-", " ")) : [];
           
           let status = "safe";

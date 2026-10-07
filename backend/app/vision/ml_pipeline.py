@@ -182,7 +182,7 @@ class VisionPipeline:
                     for item, nut in zip(detected_items, nutrition_results):
                         if not nut:
                             nut = {
-                                "calories": 100, "protein_g": 5, "carbs_g": 10, "fat_g": 2, "serving_g": 100
+                                "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0, "serving_g": 100
                             }
                         
                         foods_list.append({
@@ -254,7 +254,7 @@ class VisionPipeline:
                 # If USDA failed, fall back to some mock data for this item
                 if not nut:
                     nut = {
-                        "calories": 100, "protein_g": 5, "carbs_g": 10, "fat_g": 2, "serving_g": 100
+                        "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0, "serving_g": 100
                     }
 
                 foods_list.append({

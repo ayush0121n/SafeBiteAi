@@ -35,20 +35,9 @@ export function DailyTracker() {
     let car = Number(manualForm.carbs) || 0;
     let ft = Number(manualForm.fat) || 0;
 
-    // Simulate API / Database lookup if user only provided the name
     if (cal === 0 && pro === 0 && car === 0 && ft === 0) {
-      const name = manualForm.name.toLowerCase();
-      if (name.includes("milk")) { cal = 103; pro = 8; car = 12; ft = 2.4; }
-      else if (name.includes("egg")) { cal = 78; pro = 6; car = 0.6; ft = 5; }
-      else if (name.includes("chicken")) { cal = 165; pro = 31; car = 0; ft = 3.6; }
-      else if (name.includes("rice")) { cal = 205; pro = 4; car = 45; ft = 0.4; }
-      else if (name.includes("bread")) { cal = 79; pro = 3; car = 15; ft = 1; }
-      else if (name.includes("apple")) { cal = 95; pro = 0.5; car = 25; ft = 0.3; }
-      else if (name.includes("banana")) { cal = 105; pro = 1.3; car = 27; ft = 0.4; }
-      else {
-        // Generic fallback average if not in mock DB
-        cal = 150; pro = 5; car = 15; ft = 5;
-      }
+      // Real data mode: We do not inject fake nutrition data. 
+      // A backend integration for fetch_nutrition_for_food would go here.
     }
     
     await addLog({

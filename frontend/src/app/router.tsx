@@ -4,7 +4,6 @@ import { DashboardPage } from "../pages/DashboardPage";
 import { OnboardingPage } from "../pages/OnboardingPage";
 import { PricingPage } from "../pages/PricingPage";
 import { NewScanPage } from "../pages/NewScanPage";
-import { ScanProcessingPage } from "../pages/ScanProcessingPage";
 import { ScanResultsPage } from "../pages/ScanResultsPage";
 import { ScanHistoryPage } from "../pages/ScanHistoryPage";
 import { ProfilePage } from "../pages/ProfilePage";
@@ -61,7 +60,6 @@ export const router = createBrowserRouter([
       { path: "/app/search", element: <SearchPage /> },
       { path: "/app/product/:productId", element: <ProductDetailPage /> },
       { path: "/app/scan", element: <NewScanPage /> },
-      { path: "/app/scan/:scanId/processing", element: <ScanProcessingPage /> },
       { path: "/app/scan/:scanId", element: <ScanResultsPage /> },
       { path: "/app/meal/results", element: <MealResultsPage /> },
       { path: "/app/history", element: <ScanHistoryPage /> },
