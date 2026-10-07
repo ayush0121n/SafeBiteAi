@@ -152,7 +152,7 @@ async def create_scan(
                     "search_terms": product_name,
                     "search_simple": "1",
                     "action": "process",
-                    "json": "1"
+                    "json": "true"
                 }
             )
             if off_res.status_code == 200:
