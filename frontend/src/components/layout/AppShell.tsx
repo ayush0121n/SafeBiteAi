@@ -137,19 +137,19 @@ export function AppShell() {
           <Outlet />
         </div>
         
-        {/* App Dashboard Footer */}
-        <footer className="mt-12 border-t border-[var(--color-border)] pt-6 pb-2 text-center text-[var(--color-muted)] text-sm">
-          <div className="flex flex-col items-center justify-center gap-2">
-            <div className="flex items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
-              <ShieldCheck size={16} className="text-[var(--color-primary)]" />
-              <span className="font-bold text-[var(--color-text)]">SafeBite AI</span>
-            </div>
-            <p className="max-w-md mx-auto text-xs opacity-70">
-              This app provides educational guidance and ML-driven estimates. It does not replace professional medical advice.
-            </p>
-            <p className="text-xs opacity-60 mt-2">© 2026 Ayush Narkhede · MIT License</p>
-          </div>
-        </footer>
+    {/* App Dashboard Footer */}
+    <footer className="mt-12 border-t border-[var(--color-border)] pt-6 pb-12 text-center text-[var(--color-muted)] text-sm">
+      <div className="flex flex-col items-center justify-center gap-2">
+        <div className="flex items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
+          <ShieldCheck size={16} className="text-[var(--color-primary)]" />
+          <span className="font-bold text-[var(--color-text)]">SafeBite AI</span>
+        </div>
+        <p className="max-w-md mx-auto text-xs opacity-70">
+          This app provides educational guidance and ML-driven estimates. It does not predict medical outcomes or replace professional medical advice.
+        </p>
+        <p className="text-xs opacity-60 mt-2">© 2026 Ayush Narkhede · MIT License</p>
+      </div>
+    </footer>
       </main>
 
       {/* Bottom Navigation (Mobile Only) */}

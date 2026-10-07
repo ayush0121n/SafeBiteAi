@@ -1,7 +1,7 @@
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, PlayCircle, CheckCircle, Upload, Type, Activity, Database, AlertTriangle, ShieldCheck, X } from "lucide-react";
 import { useState, useRef } from "react";
-import { analyzeText as backendAnalyzeText } from "../api/client";
+import { analyzeText as backendAnalyzeText, API_URL } from "../api/client";
 
 
 export function FeatureDetailsPage() {
@@ -32,7 +32,7 @@ export function FeatureDetailsPage() {
           preferences: []
         }));
 
-        const res = await fetch("http://localhost:8000/api/v1/scans", {
+        const res = await fetch(`${API_URL}/api/v1/scans`, {
           method: "POST",
           body: formData
         });

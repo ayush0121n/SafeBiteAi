@@ -26,7 +26,7 @@ export function SearchPage() {
     setHasSearched(true);
     
     try {
-      let url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1`;
+      let url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=true`;
       if (region === "in") {
         url += "&tagtype_0=countries&tag_contains_0=contains&tag_0=india";
       }
