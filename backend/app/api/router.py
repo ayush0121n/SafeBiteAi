@@ -16,6 +16,7 @@ from app.services.concern_service import evaluate_concerns, determine_overall_st
 from app.services.recommendation_service import fetch_safer_alternatives
 from app.services.sugar_nova_service import analyze_sugar_and_nova
 from app.services.medication_service import check_medication_interactions
+from app.services.nutrition_parser import extract_nutrition_from_text
 from app.vision.ml_pipeline import vision_pipeline
 
 api_router = APIRouter()
@@ -24,8 +25,55 @@ ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp"}
 MAX_SIZE = settings.max_upload_size_mb * 1024 * 1024
 RULES_DIR = Path(__file__).resolve().parent.parent / "rules"
 
-# In-memory store for MVP since there's no DB
+# In-memory store for MVP fallback
 SCAN_DB = {}
+
+try:
+    from app.db.supabase import supabase_client
+except ImportError:
+    supabase_client = None
+
+def save_scan_db(scan_id: str, result: dict):
+    SCAN_DB[scan_id] = result
+    if supabase_client:
+        try:
+            # We wrap the result to match standard Supabase table row
+            supabase_client.table("scans").upsert({
+                "id": scan_id,
+                "user_id": "default", # Optional depending on auth setup
+                "result_data": result
+            }).execute()
+        except Exception as e:
+            print(f"Supabase Insert Error: {e}")
+
+def get_scan_db(scan_id: str):
+    if supabase_client:
+        try:
+            res = supabase_client.table("scans").select("*").eq("id", scan_id).execute()
+            if res.data and len(res.data) > 0:
+                return res.data[0].get("result_data", {})
+        except Exception as e:
+            print(f"Supabase Select Error: {e}")
+    return SCAN_DB.get(scan_id)
+
+def list_scans_db():
+    if supabase_client:
+        try:
+            res = supabase_client.table("scans").select("*").order("created_at", desc=True).execute()
+            if res.data:
+                return [row.get("result_data", {}) for row in res.data]
+        except Exception as e:
+            print(f"Supabase List Error: {e}")
+    return list(SCAN_DB.values())
+
+def delete_scan_db(scan_id: str):
+    if scan_id in SCAN_DB:
+        del SCAN_DB[scan_id]
+    if supabase_client:
+        try:
+            supabase_client.table("scans").delete().eq("id", scan_id).execute()
+        except Exception as e:
+            print(f"Supabase Delete Error: {e}")
 
 # Minimum character count for OCR text to be considered a real label
 MIN_LABEL_TEXT_LENGTH = 30
@@ -224,7 +272,7 @@ async def create_scan(
             "pipelineUsed": pipeline_used,
         }
         if privacy_mode.lower() != "true":
-            SCAN_DB[scan_id] = result
+            save_scan_db(scan_id, result)
         await asyncio.sleep(0.5)
         return result
 
@@ -242,21 +290,31 @@ async def create_scan(
         ocr_confidence = 0.65
 
     # ---------------------------------------------------------
-    # Nutrition: use OpenFoodFacts data if available, else empty
+    # Nutrition: extract from OCR, fallback to OpenFoodFacts
     # ---------------------------------------------------------
-    if real_nutrition:
-        nutrition = real_nutrition
-    else:
-        nutrition = {
-            "serving_size": "unknown",
-            "calories": None,
-            "total_sugar_g": None,
-            "added_sugar_g": None,
-            "sodium_mg": None,
-            "saturated_fat_g": None,
-            "fiber_g": None,
-            "protein_g": None,
-        }
+    ocr_nutrition = extract_nutrition_from_text(ocr_text) if ocr_text else {}
+    
+    # Check if we extracted any actual values from OCR
+    has_ocr_nutrition = any(v is not None and v != "unknown" for k, v in ocr_nutrition.items() if k != "serving_size")
+
+    # Merge logic: prioritize OCR values, fill blanks with OpenFoodFacts
+    nutrition = {
+        "serving_size": ocr_nutrition.get("serving_size") if ocr_nutrition.get("serving_size") != "unknown" else (real_nutrition.get("serving_size", "unknown")),
+        "calories": ocr_nutrition.get("calories") if ocr_nutrition.get("calories") is not None else real_nutrition.get("calories"),
+        "total_fat_g": ocr_nutrition.get("total_fat_g") if ocr_nutrition.get("total_fat_g") is not None else real_nutrition.get("total_fat_g"),
+        "saturated_fat_g": ocr_nutrition.get("saturated_fat_g") if ocr_nutrition.get("saturated_fat_g") is not None else real_nutrition.get("saturated_fat_g"),
+        "trans_fat_g": ocr_nutrition.get("trans_fat_g"),
+        "cholesterol_mg": ocr_nutrition.get("cholesterol_mg"),
+        "sodium_mg": ocr_nutrition.get("sodium_mg") if ocr_nutrition.get("sodium_mg") is not None else real_nutrition.get("sodium_mg"),
+        "total_carbohydrate_g": ocr_nutrition.get("total_carbohydrate_g") if ocr_nutrition.get("total_carbohydrate_g") is not None else real_nutrition.get("total_carbohydrate_g"),
+        "fiber_g": ocr_nutrition.get("dietary_fiber_g") if ocr_nutrition.get("dietary_fiber_g") is not None else real_nutrition.get("fiber_g"),
+        "total_sugar_g": ocr_nutrition.get("total_sugars_g") if ocr_nutrition.get("total_sugars_g") is not None else real_nutrition.get("total_sugar_g"),
+        "added_sugar_g": ocr_nutrition.get("added_sugars_g") if ocr_nutrition.get("added_sugars_g") is not None else real_nutrition.get("added_sugar_g"),
+        "protein_g": ocr_nutrition.get("protein_g") if ocr_nutrition.get("protein_g") is not None else real_nutrition.get("protein_g"),
+    }
+    
+    # Update nutrition confidence based on successful OCR extraction
+    nutrition_confidence = 0.85 if has_ocr_nutrition else (0.70 if real_nutrition else 0.0)
 
     # 1. Ingredient parsing
     raw_ingredients, allergy_stmt = parse_ingredients_text(raw_text)
@@ -312,12 +370,14 @@ async def create_scan(
         "productName": product_name,
         "status": overall_status,
         "analysisState": "completed",
-        "isMock": "Mock Mode" in pipeline_used,
+        "isMock": vision_results.get("is_mock", True) if vision_results else True,
         "confidence": {
-            "overall": round(ocr_confidence * 0.95, 2),
+            "overall": round(
+                (ocr_confidence + (0.9 if ingredients_normalized else 0.4) + nutrition_confidence) / 3, 2
+            ),
             "ocr": ocr_confidence,
-            "ingredients": round(ocr_confidence * 0.92, 2),
-            "nutrition": round(ocr_confidence * 0.80, 2) if real_nutrition else 0.0,
+            "ingredients": 0.95 if ingredients_normalized else 0.4,
+            "nutrition": nutrition_confidence,
         },
         "imageUrl": (
             f"data:{file.content_type};base64,{base64.b64encode(content).decode('utf-8')}"
@@ -366,7 +426,7 @@ async def create_scan(
     }
 
     if privacy_mode.lower() != "true":
-        SCAN_DB[scan_id] = result
+        save_scan_db(scan_id, result)
 
     await asyncio.sleep(1.0)
     return result
@@ -374,9 +434,10 @@ async def create_scan(
 
 @api_router.get("/api/v1/scans/{scan_id}")
 async def get_scan(scan_id: str):
-    if scan_id not in SCAN_DB:
+    scan_result = get_scan_db(scan_id)
+    if not scan_result:
         raise HTTPException(status_code=404, detail="Scan not found")
-    return SCAN_DB[scan_id]
+    return scan_result
 
 
 from fastapi.responses import FileResponse
@@ -393,7 +454,7 @@ async def get_scan_image(scan_id: str):
 
 @api_router.get("/api/v1/scans")
 async def list_scans():
-    return {"scans": list(SCAN_DB.values())}
+    return {"scans": list_scans_db()}
 
 
 @api_router.delete("/api/v1/scans/{scan_id}")
@@ -401,8 +462,7 @@ async def delete_scan(scan_id: str):
     upload_dir = Path(settings.upload_directory)
     for f in upload_dir.glob(f"{scan_id}.*"):
         f.unlink(missing_ok=True)
-    if scan_id in SCAN_DB:
-        del SCAN_DB[scan_id]
+    delete_scan_db(scan_id)
     return {"deleted": scan_id}
 
 
@@ -439,7 +499,7 @@ async def scan_meal(
 
     meal_id = str(uuid.uuid4())
     meal_results["meal_id"] = meal_id
-    meal_results["isMock"] = "Mock Mode" in meal_results.get("pipeline", "")
+    meal_results["isMock"] = meal_results.get("is_mock", True)
     meal_results["imageUrl"] = f"data:{file.content_type};base64,{base64.b64encode(content).decode('utf-8')}"
 
     await asyncio.sleep(1.0)

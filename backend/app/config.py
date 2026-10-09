@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     ml_container_api_key: str = "local_ml_key"
     hugging_face_api_key: str = ""
     usda_api_key: str = ""
+    supabase_url: str = ""
+    supabase_key: str = ""
 
     @property
     def cors_origin_list(self) -> List[str]:
