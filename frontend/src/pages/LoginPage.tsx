@@ -57,6 +57,10 @@ export function LoginPage() {
           <p className="text-[var(--color-muted)]">Sign in to your SafeBite account</p>
         </div>
 
+        <div className="bg-[var(--color-caution-bg)] border border-[var(--color-caution)] text-[var(--color-caution)] p-3 rounded-lg text-sm mb-6 text-center shadow-sm">
+          <strong>Demo Mode:</strong> Authentication is currently bypassed for demo purposes. Any email/password will log you into a local guest session.
+        </div>
+
         {error && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}

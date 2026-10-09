@@ -143,6 +143,20 @@ export function ScanResultsPage() {
           )}
         </div>
       </div>
+      
+      {/* Pipeline Status Badge */}
+      <div className="flex flex-col items-center mt-2 mb-4">
+        {result.isMock ? (
+          <div className="bg-[var(--color-caution-bg)] border border-[var(--color-caution)] text-[var(--color-caution)] px-4 py-2 rounded-full font-bold flex flex-col items-center shadow-sm">
+            <span>Mock Mode – Results are simulated</span>
+            <span className="text-xs font-normal mt-1 text-center">Using simulated data because real ML libraries or APIs were unavailable.</span>
+          </div>
+        ) : (
+          <div className="bg-[var(--color-safe-bg)] border border-[var(--color-safe)] text-[var(--color-safe)] px-4 py-2 rounded-full font-bold shadow-sm">
+            Real Pipeline: {result.pipelineUsed || "Active"}
+          </div>
+        )}
+      </div>
 
       {/* Not-a-food-label warning */}
       {result.status === "uncertain" && !result.extractedText?.ingredientsRaw && (
@@ -410,7 +424,10 @@ export function ScanResultsPage() {
 
       {/* Disclaimer */}
       <section className="bg-[var(--color-caution-bg)] rounded-xl p-4 border border-[var(--color-caution)]">
-        <p className="font-bold text-[var(--color-text)] text-sm mb-1">⚠️ Important</p>
+        <p className="font-bold text-[var(--color-text)] text-sm mb-1">⚠️ Medical Disclaimer</p>
+        <p className="text-[var(--color-muted)] text-sm leading-relaxed mb-2">
+          SafeBite AI provides educational guidance only. It does not replace professional medical advice, diagnosis, or treatment. Always consult a doctor or dietitian for health decisions.
+        </p>
         {result.disclaimers.map((d, i) => (
           <p key={i} className="text-[var(--color-muted)] text-sm leading-relaxed">{d}</p>
         ))}

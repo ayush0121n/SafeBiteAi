@@ -92,4 +92,6 @@ export interface ScanResult {
   alternatives?: Alternative[];
   disclaimers: string[];
   createdAt: string;
+  isMock?: boolean;
+  pipelineUsed?: string;
 }

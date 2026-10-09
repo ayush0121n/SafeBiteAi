@@ -138,7 +138,7 @@ async def create_scan(
     raw_name = file.filename.rsplit(".", 1)[0].replace("-", " ").replace("_", " ") if file.filename else ""
     # Remove digits and common test suffixes so OFF can actually find it
     raw_name = re.sub(r'\d+', '', raw_name)
-    raw_name = re.sub(r'(?i)\b(label|test|image|scan|capture|camera|photo|img|pic|picture)\b', '', raw_name)
+    raw_name = re.sub(r'(?i)\b(label|test|image|scan|capture|camera|photo|img|pic|picture|screenshot|whatsapp|viber|signal|download)\b', '', raw_name)
     product_name = raw_name.strip().title()
 
     real_ingredients = ""
@@ -312,6 +312,7 @@ async def create_scan(
         "productName": product_name,
         "status": overall_status,
         "analysisState": "completed",
+        "isMock": "Mock Mode" in pipeline_used,
         "confidence": {
             "overall": round(ocr_confidence * 0.95, 2),
             "ocr": ocr_confidence,
@@ -359,7 +360,7 @@ async def create_scan(
         "alternatives": alternatives,
         "disclaimers": [
             "SafeBite AI provides educational guidance based on the readable label image. Always check the original package.",
-        ],
+        ] + (["Results are simulated for demo purposes."] if "Mock Mode" in pipeline_used else []),
         "createdAt": datetime.utcnow().isoformat() + "Z",
         "pipelineUsed": pipeline_used,
     }
@@ -438,6 +439,7 @@ async def scan_meal(
 
     meal_id = str(uuid.uuid4())
     meal_results["meal_id"] = meal_id
+    meal_results["isMock"] = "Mock Mode" in meal_results.get("pipeline", "")
     meal_results["imageUrl"] = f"data:{file.content_type};base64,{base64.b64encode(content).decode('utf-8')}"
 
     await asyncio.sleep(1.0)

@@ -299,10 +299,10 @@ class VisionPipeline:
         """
         return {
             "status": "success",
-            "extracted_text": "Ingredients: water, sugar, salt. Nutrition facts: calories 100, sodium 50mg, fat 0g, protein 2g, carbohydrate 10g",
+            "extracted_text": "Ingredients: Whole wheat flour, water, high fructose corn syrup, salt, yeast, soybean oil, soy lecithin. Nutrition facts: calories 120, sodium 150mg, fat 2g, protein 4g, carbohydrate 22g, added sugar 4g",
             "regions_detected": 1,
             "region_details": [],
-            "pipeline": "Mock Mode (Simulated Label Text)"
+            "pipeline": "Mock Mode"
         }
 
     def _mock_process_meal(self, image: Image.Image) -> Dict[str, Any]:
@@ -319,7 +319,7 @@ class VisionPipeline:
                 "carbs_g": 0,
                 "fat_g": 0
             },
-            "pipeline": "Mock Mode (ML libraries unavailable — install ultralytics for real detection)"
+            "pipeline": "Mock Mode"
         }
 
 vision_pipeline = VisionPipeline()

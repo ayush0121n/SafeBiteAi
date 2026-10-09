@@ -7,3 +7,9 @@ pillow==10.4.0
 opencv-python-headless==4.10.0.84
 pytest==8.3.0
 httpx==0.27.0
+
+# Optional ML Dependencies for local Vision Pipeline (Mock mode used if absent)
+# paddleocr>=2.6.0
+# ultralytics>=8.0.0
+# torch>=2.0.0
+# numpy>=1.23.0

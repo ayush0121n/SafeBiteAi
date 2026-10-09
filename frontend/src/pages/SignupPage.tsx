@@ -55,6 +55,10 @@ export function SignupPage() {
           <p className="text-[var(--color-muted)]">Join SafeBite AI to track your nutrition safely</p>
         </div>
 
+        <div className="bg-[var(--color-caution-bg)] border border-[var(--color-caution)] text-[var(--color-caution)] p-3 rounded-lg text-sm mb-6 text-center shadow-sm">
+          <strong>Demo Mode:</strong> Authentication is currently bypassed for demo purposes. Any sign up will log you into a local guest session.
+        </div>
+
         {error && (
           <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-3 rounded-lg text-sm font-bold mb-6 text-center">
             {error}
