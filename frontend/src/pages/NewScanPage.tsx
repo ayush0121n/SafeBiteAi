@@ -333,12 +333,22 @@ export function NewScanPage() {
 
       {/* Analyzing State */}
       {analyzing && (
-        <div className="bg-[var(--color-surface)] rounded-2xl p-8 text-center border border-[var(--color-border)] animate-fade-in">
-          <div className="w-12 h-12 border-4 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-[var(--color-text)] mb-2">Analyzing your label...</h3>
-          <p className="text-[var(--color-muted)]">
-            Sending to SafeBite AI for personalized checking.
-          </p>
+        <div className="bg-[var(--color-surface)] rounded-2xl overflow-hidden border border-[var(--color-border)] animate-fade-in relative">
+          <div className="relative">
+            <img src={preview!} alt="Label preview" className="w-full max-h-[300px] object-contain bg-[var(--color-bg)] opacity-50" />
+            
+            {/* Scanning Laser Line */}
+            <div className="absolute left-0 right-0 h-1 bg-[var(--color-primary)] shadow-[0_0_15px_var(--color-primary)] opacity-80 z-10 animate-scan-laser"></div>
+            
+            {/* Loading Overlay */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/30 backdrop-blur-[2px] z-20">
+              <div className="w-16 h-16 border-4 border-white/20 border-t-[var(--color-primary)] rounded-full animate-spin shadow-lg mb-4" />
+              <h3 className="text-2xl font-bold text-white mb-2 drop-shadow-md">Scanning Label...</h3>
+              <p className="text-white/90 drop-shadow-md font-medium px-4 text-center">
+                Processing image, reading text, and checking your profile.
+              </p>
+            </div>
+          </div>
         </div>
       )}
 

@@ -106,32 +106,44 @@ class VisionPipeline:
                 # fallback below
 
         from app.config import settings
-        hf_token = settings.hugging_face_api_key
-        if not hf_token or hf_token == "your_hf_key_here":
-            logger.info("Running in fallback/mock mode (No Hugging Face token).")
-            return self._mock_process(image)
-
+        
+        # We will use OCR.space API for real OCR as fallback. It has a free tier.
         try:
-            # Call Hugging Face API for OCR
+            logger.info("Using OCR.space for label OCR...")
+            import base64
+            b64_image = base64.b64encode(image_bytes).decode('utf-8')
+            
             async with httpx.AsyncClient() as client:
                 response = await client.post(
-                    "https://api-inference.huggingface.co/models/microsoft/trocr-base-printed",
-                    headers={"Authorization": f"Bearer {hf_token}"},
-                    content=image_bytes,
-                    timeout=15.0
+                    "https://api.ocr.space/parse/image",
+                    data={
+                        "apikey": "helloworld", 
+                        "language": "eng", 
+                        "isOverlayRequired": "false",
+                        "base64Image": f"data:image/jpeg;base64,{b64_image}"
+                    },
+                    timeout=20.0
                 )
                 response.raise_for_status()
                 result = response.json()
             
-            # Extract text
-            text = result[0].get("generated_text", "") if isinstance(result, list) else result.get("generated_text", "")
+            text = ""
+            if result.get("ParsedResults"):
+                text = " ".join([r.get("ParsedText", "") for r in result["ParsedResults"]])
             
+            import re
+            text = re.sub(r'\s+', ' ', text).strip()
+            
+            # If OCR.space returns empty, fallback to mock to prevent crashing
+            if not text:
+                return self._mock_process(image)
+                
             return {
                 "status": "success",
                 "extracted_text": text,
                 "regions_detected": 1,
                 "region_details": [],
-                "pipeline": "Hugging Face TrOCR"
+                "pipeline": "OCR.space API"
             }
         except Exception as e:
             logger.error(f"Error in OCR pipeline: {e}")

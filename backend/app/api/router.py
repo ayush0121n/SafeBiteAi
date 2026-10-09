@@ -135,47 +135,50 @@ async def create_scan(
     # ---------------------------------------------------------
     # Try OpenFoodFacts FIRST (before validation) using the filename as a hint
     # ---------------------------------------------------------
-    raw_name = file.filename.rsplit(".", 1)[0].replace("-", " ").replace("_", " ") if file.filename else "Food Label"
+    raw_name = file.filename.rsplit(".", 1)[0].replace("-", " ").replace("_", " ") if file.filename else ""
     # Remove digits and common test suffixes so OFF can actually find it
     raw_name = re.sub(r'\d+', '', raw_name)
-    raw_name = re.sub(r'(?i)\b(label|test|image|scan|capture|camera|photo)\b', '', raw_name)
-    product_name = raw_name.strip().title() or "Food Label"
+    raw_name = re.sub(r'(?i)\b(label|test|image|scan|capture|camera|photo|img|pic|picture)\b', '', raw_name)
+    product_name = raw_name.strip().title()
 
     real_ingredients = ""
     real_nutrition = {}
     try:
-        import httpx
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            off_res = await client.get(
-                "https://world.openfoodfacts.org/cgi/search.pl",
-                params={
-                    "search_terms": product_name,
-                    "search_simple": "1",
-                    "action": "process",
-                    "json": "true"
-                }
-            )
-            if off_res.status_code == 200:
-                off_data = off_res.json()
-                if off_data.get("products") and len(off_data["products"]) > 0:
-                    best_match = off_data["products"][0]
-                    product_name = best_match.get("product_name", product_name)
-                    real_ingredients = (
-                        best_match.get("ingredients_text_en")
-                        or best_match.get("ingredients_text")
-                        or ""
-                    )
-                    nut = best_match.get("nutriments", {})
-                    real_nutrition = {
-                        "serving_size": "100g",
-                        "calories": nut.get("energy-kcal_100g", 0),
-                        "total_sugar_g": nut.get("sugars_100g", 0),
-                        "added_sugar_g": nut.get("added-sugars_100g", 0),
-                        "sodium_mg": (nut.get("sodium_100g", 0) * 1000) if nut.get("sodium_100g") else 0,
-                        "saturated_fat_g": nut.get("saturated-fat_100g", 0),
-                        "fiber_g": nut.get("fiber_100g", 0),
-                        "protein_g": nut.get("proteins_100g", 0),
+        if product_name:
+            import httpx
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                off_res = await client.get(
+                    "https://world.openfoodfacts.org/cgi/search.pl",
+                    params={
+                        "search_terms": product_name,
+                        "search_simple": "1",
+                        "action": "process",
+                        "json": "true"
                     }
+                )
+                if off_res.status_code == 200:
+                    off_data = off_res.json()
+                    if off_data.get("products") and len(off_data["products"]) > 0:
+                        best_match = off_data["products"][0]
+                        product_name = best_match.get("product_name", product_name)
+                        real_ingredients = (
+                            best_match.get("ingredients_text_en")
+                            or best_match.get("ingredients_text")
+                            or ""
+                        )
+                        nut = best_match.get("nutriments", {})
+                        real_nutrition = {
+                            "serving_size": "100g",
+                            "calories": nut.get("energy-kcal_100g", 0),
+                            "total_sugar_g": nut.get("sugars_100g", 0),
+                            "added_sugar_g": nut.get("added-sugars_100g", 0),
+                            "sodium_mg": (nut.get("sodium_100g", 0) * 1000) if nut.get("sodium_100g") else 0,
+                            "saturated_fat_g": nut.get("saturated-fat_100g", 0),
+                            "fiber_g": nut.get("fiber_100g", 0),
+                            "protein_g": nut.get("proteins_100g", 0),
+                        }
+        else:
+            product_name = "Food Label"
     except Exception as e:
         print(f"OFF Search Error: {e}")
 
@@ -233,7 +236,7 @@ async def create_scan(
         ocr_confidence = 0.70
     elif "YOLOv8" in pipeline_used or "PaddleOCR" in pipeline_used:
         ocr_confidence = 0.92
-    elif "Hugging Face" in pipeline_used:
+    elif "OCR.space API" in pipeline_used or "Hugging Face" in pipeline_used:
         ocr_confidence = 0.80
     else:
         ocr_confidence = 0.65

@@ -219,3 +219,14 @@ button {
 .animate-3d-float {
   animation: float-3d 6s ease-in-out infinite;
 }
+
+@keyframes scan-laser {
+  0% { top: 0%; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+.animate-scan-laser {
+  animation: scan-laser 2s linear infinite;
+}
