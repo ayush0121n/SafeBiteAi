@@ -197,7 +197,41 @@ class VisionPipeline:
             except Exception as e:
                 logger.error(f"Error in Hugging Face OCR: {e}")
 
-        # ---------- 3. Fallback to Mock ----------
+        # ---------- 3. Try OCR.space API (Robust Full Document OCR) ----------
+        import base64
+        try:
+            b64_img = base64.b64encode(processed_bytes).decode('utf-8')
+            async with httpx.AsyncClient(timeout=25.0) as client:
+                response = await client.post(
+                    "https://api.ocr.space/parse/image",
+                    data={
+                        "apikey": getattr(settings, "ocr_api_key", "helloworld"),
+                        "base64Image": f"data:image/jpeg;base64,{b64_img}",
+                        "language": "eng",
+                        "scale": "true",
+                        "OCREngine": "2"
+                    }
+                )
+                if response.status_code == 200:
+                    ocr_result = response.json()
+                    if not ocr_result.get("IsErroredOnProcessing", True) and ocr_result.get("ParsedResults"):
+                        text = ocr_result["ParsedResults"][0].get("ParsedText", "")
+                        text = re.sub(r'\s+', ' ', text).strip()
+                        if len(text) > 25:
+                            return {
+                                "status": "success",
+                                "extracted_text": text,
+                                "regions_detected": 1,
+                                "region_details": [],
+                                "pipeline": "OCR.space API",
+                                "is_mock": False
+                            }
+                else:
+                    logger.warning(f"OCR.space API error: {response.status_code} - {response.text}")
+        except Exception as e:
+            logger.error(f"Error in OCR.space API: {e}")
+
+        # ---------- 4. Fallback to Mock ----------
         logger.info("Falling back to Mock Mode")
         return self._mock_process(image)
 
