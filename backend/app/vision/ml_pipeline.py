@@ -48,7 +48,11 @@ class VisionPipeline:
             return None
         if self.ocr_model is None:
             logger.info("Loading PaddleOCR model...")
-            self.ocr_model = PaddleOCR(use_angle_cls=True, lang='en', use_gpu=(self.device == 'cuda'))
+            try:
+                self.ocr_model = PaddleOCR(use_angle_cls=True, lang='en', use_gpu=(self.device == 'cuda'))
+            except Exception as e:
+                logger.warning(f"PaddleOCR failed to load: {e}")
+                self.ocr_model = None
         return self.ocr_model
 
     def _preprocess_image(self, image: Image.Image) -> Image.Image:
