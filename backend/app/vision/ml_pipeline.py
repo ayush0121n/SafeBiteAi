@@ -63,6 +63,15 @@ class VisionPipeline:
         # Convert to RGB
         image = image.convert("RGB")
 
+        # Smart Resize: Make sure the image is large enough for OCR, but not too large
+        # Target ~1200px on the longest side
+        max_size = 1200
+        w, h = image.size
+        if max(w, h) > max_size or max(w, h) < 800:
+            ratio = max_size / max(w, h)
+            new_w, new_h = int(w * ratio), int(h * ratio)
+            image = image.resize((new_w, new_h), Image.Resampling.LANCZOS)
+
         # Auto-contrast
         image = ImageOps.autocontrast(image, cutoff=2)
 
@@ -155,14 +164,16 @@ class VisionPipeline:
         hf_token = settings.hugging_face_api_key
 
         if hf_token and hf_token not in ["", "your_hf_key_here", "hf_xxx"]:
+            logger.info("Trying Hugging Face OCR...")
             try:
-                async with httpx.AsyncClient(timeout=35.0) as client:
+                async with httpx.AsyncClient(timeout=30.0) as client:
                     for attempt in range(2):
                         response = await client.post(
-                            "https://api-inference.huggingface.co/models/stepfun-ai/got-ocr2_0",
+                            "https://api-inference.huggingface.co/models/microsoft/trocr-base-printed",
                             headers={
                                 "Authorization": f"Bearer {hf_token}",
-                                "Content-Type": "image/jpeg"
+                                "Content-Type": "image/jpeg",
+                                "x-wait-for-model": "true"
                             },
                             content=processed_bytes,
                         )
@@ -176,8 +187,9 @@ class VisionPipeline:
                                 text = result.get("generated_text", "")
 
                             text = re.sub(r'\s+', ' ', text).strip()
+                            logger.info(f"Hugging Face returned text of length {len(text)}")
 
-                            if len(text) > 15:
+                            if len(text) >= 20:
                                 return {
                                     "status": "success",
                                     "extracted_text": text,
@@ -186,14 +198,9 @@ class VisionPipeline:
                                     "pipeline": "Hugging Face TrOCR",
                                     "is_mock": False
                                 }
-                            break # Success but short text, fallback
-                        elif response.status_code == 503:
-                            result = response.json()
-                            wait_time = result.get("estimated_time", 10.0)
-                            logger.info(f"HF OCR model loading. Waiting {wait_time}s...")
-                            if wait_time > 15:
+                            else:
+                                logger.warning(f"Hugging Face text too short ({len(text)} chars), falling back.")
                                 break
-                            await asyncio.sleep(min(wait_time, 15))
                         else:
                             logger.warning(f"Hugging Face API error: {response.status_code} - {response.text}")
                             break
@@ -203,44 +210,48 @@ class VisionPipeline:
 
         # ---------- 3. Try OCR.space API (Robust Full Document OCR) ----------
         import base64
-        ocr_key = getattr(settings, "ocr_api_key", "helloworld")
-        if not ocr_key: 
-            ocr_key = "helloworld"
-            
-        try:
-            b64_img = base64.b64encode(processed_bytes).decode('utf-8')
-            async with httpx.AsyncClient(timeout=25.0) as client:
-                response = await client.post(
-                    "https://api.ocr.space/parse/image",
-                    data={
-                        "apikey": ocr_key,
-                        "base64Image": f"data:image/jpeg;base64,{b64_img}",
-                        "language": "eng",
-                        "scale": "true",
-                        "OCREngine": "2"
-                    }
-                )
-                if response.status_code == 200:
-                    ocr_result = response.json()
-                    if not ocr_result.get("IsErroredOnProcessing", True) and ocr_result.get("ParsedResults"):
-                        text = ocr_result["ParsedResults"][0].get("ParsedText", "")
-                        text = re.sub(r'\s+', ' ', text).strip()
-                        if len(text) > 25:
-                            return {
-                                "status": "success",
-                                "extracted_text": text,
-                                "regions_detected": 1,
-                                "region_details": [],
-                                "pipeline": "OCR.space API",
-                                "is_mock": False
-                            }
-                else:
-                    logger.warning(f"OCR.space API error: {response.status_code} - {response.text}")
-        except Exception as e:
-            logger.error(f"Error in OCR.space API: {e}")
+        ocr_key = getattr(settings, "ocr_api_key", "")
+        if ocr_key and ocr_key not in ["", "helloworld", "your_ocr_space_key"]:
+            logger.info("Trying OCR.space API...")
+            try:
+                b64_img = base64.b64encode(processed_bytes).decode('utf-8')
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    response = await client.post(
+                        "https://api.ocr.space/parse/image",
+                        data={
+                            "apikey": ocr_key,
+                            "base64Image": f"data:image/jpeg;base64,{b64_img}",
+                            "language": "eng",
+                            "scale": "true",
+                            "OCREngine": "2"
+                        }
+                    )
+                    if response.status_code == 200:
+                        ocr_result = response.json()
+                        if not ocr_result.get("IsErroredOnProcessing", True) and ocr_result.get("ParsedResults"):
+                            text = ocr_result["ParsedResults"][0].get("ParsedText", "")
+                            text = re.sub(r'\s+', ' ', text).strip()
+                            logger.info(f"OCR.space returned text of length {len(text)}")
+                            if len(text) >= 20:
+                                return {
+                                    "status": "success",
+                                    "extracted_text": text,
+                                    "regions_detected": 1,
+                                    "region_details": [],
+                                    "pipeline": "OCR.space API",
+                                    "is_mock": False
+                                }
+                            else:
+                                logger.warning(f"OCR.space text too short ({len(text)} chars), falling back.")
+                    else:
+                        logger.warning(f"OCR.space API error: {response.status_code} - {response.text}")
+            except Exception as e:
+                logger.error(f"Error in OCR.space API: {e}")
+        else:
+            logger.info("Skipping OCR.space because no real API key was provided.")
 
         # ---------- 4. Fallback to Mock ----------
-        logger.info("Falling back to Mock Mode")
+        logger.warning("Falling back to Mock Mode because all real OCR attempts failed or returned no text.")
         return self._mock_process(image)
 
     async def process_meal_image(self, image_bytes: bytes) -> Dict[str, Any]:
