@@ -230,8 +230,15 @@ async def create_scan(
     except Exception as e:
         print(f"OFF Search Error: {e}")
 
+    # ---------------------------------------------------------
+    # Nutrition: extract from OCR, fallback to OpenFoodFacts
+    # ---------------------------------------------------------
+    ocr_nutrition = extract_nutrition_from_text(ocr_text) if ocr_text else {}
+    has_ocr_nutrition = any(v is not None and v != "unknown" for k, v in ocr_nutrition.items() if k != "serving_size")
+
     # The text we actually use for analysis: prefer real OCR, then OFF ingredients
-    raw_text = ocr_text if _is_food_label_text(ocr_text) else real_ingredients
+    is_valid_ocr = _is_food_label_text(ocr_text) or has_ocr_nutrition
+    raw_text = ocr_text if is_valid_ocr else real_ingredients
 
     # ---------------------------------------------------------
     # Validate: is this actually a food label?
@@ -279,7 +286,7 @@ async def create_scan(
     # ---------------------------------------------------------
     # Confidence based on pipeline
     # ---------------------------------------------------------
-    if real_ingredients and not _is_food_label_text(ocr_text):
+    if real_ingredients and not is_valid_ocr:
         # We're relying on OpenFoodFacts, not OCR — mark confidence accordingly
         ocr_confidence = 0.70
     elif "YOLOv8" in pipeline_used or "PaddleOCR" in pipeline_used:
@@ -288,14 +295,6 @@ async def create_scan(
         ocr_confidence = 0.80
     else:
         ocr_confidence = 0.65
-
-    # ---------------------------------------------------------
-    # Nutrition: extract from OCR, fallback to OpenFoodFacts
-    # ---------------------------------------------------------
-    ocr_nutrition = extract_nutrition_from_text(ocr_text) if ocr_text else {}
-    
-    # Check if we extracted any actual values from OCR
-    has_ocr_nutrition = any(v is not None and v != "unknown" for k, v in ocr_nutrition.items() if k != "serving_size")
 
     # Merge logic: prioritize OCR values, fill blanks with OpenFoodFacts
     nutrition = {
@@ -423,6 +422,7 @@ async def create_scan(
         ] + (["Results are simulated for demo purposes."] if "Mock Mode" in pipeline_used else []),
         "createdAt": datetime.utcnow().isoformat() + "Z",
         "pipelineUsed": pipeline_used,
+        "rawOcrText": ocr_text,
     }
 
     if privacy_mode.lower() != "true":
